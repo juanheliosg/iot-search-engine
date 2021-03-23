@@ -3,6 +3,4 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-
-
-      
+POST /v1/extractor v1.extractor.ExtractorController.post
