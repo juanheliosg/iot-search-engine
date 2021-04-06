@@ -5,6 +5,8 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, IllegalUriException}
+import akka.kafka.ProducerSettings
+import org.apache.kafka.common.serialization.{StringSerializer}
 import akka.stream.alpakka.json.scaladsl.JsonReader
 import akka.stream.scaladsl._
 import akka.util.ByteString
@@ -70,12 +72,13 @@ object HttpSchemaValidator extends SchemaValidator{
 
   }
 
-  def extractEntityData(response: HttpResponse): Source[ByteString, _] =
+  def extractEntityData(response: HttpResponse): Source[ByteString, _] = {
     response match {
       case HttpResponse(OK, _, entity, _) => entity.dataBytes
       case notOkResponse =>
         Source.failed(new RuntimeException(s"illegal response $notOkResponse"))
     }
+  }
 
   /**
    * Validate a HTTP extractor with his font
@@ -85,25 +88,25 @@ object HttpSchemaValidator extends SchemaValidator{
    */
   def validate(extractor: ExtractorFormInput, maxNumSensor: Int): ValidationResult = {
 
-    val ioConfig = extractor.ioConfig
+    val inputConfig = extractor.ioConfig.inputConfig
     val errors: mutable.Set[ValidationError] = collection.mutable.Set()
 
-    if (ioConfig.jsonPath.isEmpty) {
+    if (inputConfig.jsonPath.isEmpty) {
       errors.addOne(ValidationError("You must set jsonPath variable for HttpExtractor"))
     }
 
-    if (ioConfig.freq.isEmpty)
+    if (inputConfig.freq.isEmpty)
       errors.addOne(ValidationError("You must set freq variable for HttpExtractor"))
 
     if (errors.isEmpty){
-      val httpRequest = HttpRequest(uri = extractor.ioConfig.address)
+      val httpRequest = HttpRequest(uri = inputConfig.address)
       val futureResponse: Future[mutable.Set[ValidationError]] = {
         try{
           Source
             .single(httpRequest)
             .mapAsync(1)(Http()(actorSystem).singleRequest(_)) //: HttpResponse
             .flatMapConcat(extractEntityData)
-            .via(JsonReader.select(ioConfig.jsonPath.get))
+            .via(JsonReader.select(inputConfig.jsonPath.get))
             .via(JsonFraming.objectScanner(maxNumSensor))
             .take(1) //Se asume que todos son iguales
             .map(_.utf8String)
@@ -134,9 +137,9 @@ object HttpSchemaValidator extends SchemaValidator{
       } //SOlo toma un elemento
       //Tengo que evitar que sea síncrono
       val response = Await.result(futureResponse,3.seconds)
-      if (response.isEmpty)
+      if (response.isEmpty) {
         Valid
-      else
+      } else
         Invalid(response.toSeq)
     }
     else{

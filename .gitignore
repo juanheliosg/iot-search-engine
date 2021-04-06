@@ -39,6 +39,9 @@ build
 .scala_dependencies
 .cache
 .cache-main
+ddata-application-replicator-25520
+journal
+logs
 
 #general
 *.class

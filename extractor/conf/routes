@@ -4,3 +4,9 @@
 # ~~~~
 
 POST /v1/extractor v1.extractor.ExtractorController.post
+GET /v1/extractor/:id v1.extractor.ExtractorController.get(id: Long)
+PUT /v1/extractor/:id v1.extractor.ExtractorController.put(id: Long)
+DELETE /v1/extractor/:id v1.extractor.ExtractorController.delete(id: Long)
+GET /v1/extractor/:id/start v1.extractor.ExtractorController.getStart(id: Long)
+GET /v1/extractor/:id/stop v1.extractor.ExtractorController.getStop(id: Long)
+

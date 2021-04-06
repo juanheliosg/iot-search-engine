@@ -3,19 +3,52 @@ package v1.extractor
 
 import play.api.data.FormError
 import play.api.data.validation.{Constraint, Invalid, ValidationResult}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json._
 import v1.extractor.http.HttpSchemaValidator
 
-case class ExtractorFormInput(extType: String,dataSchema: DataSchema,
-                              ioConfig: IOConfig)
+case class ExtractorFormInput(id: Long, extType: String,dataSchema: DataSchema,
+                              ioConfig: IOConfigForm)
+
+/**
+ * Configuration form
+ * @param address uri direction for retrieving sensor data
+ * @param jsonPath optional jsonPATH for selecting
+ * @param freq optional retrieving frequency
+ */
+case class InputConfigForm(address: String, jsonPath: Option[String], freq: Option[Long])
+object InputConfigForm{
+  implicit val format: Format[InputConfigForm] = Json.format
+}
+
+/**
+ * InputConfig and Kafka config form
+ * @param inputConfig
+ * @param kafkaConfig
+ */
+case class IOConfigForm(inputConfig: InputConfigForm, kafkaConfig: KafkaConfig)
+object IOConfigForm{
+  implicit val format: Format[IOConfigForm] = Json.format
+}
+
+/**
+ * Interface that all schema validators must implement
+ */
 trait SchemaValidator{
   def validate(extractor: ExtractorFormInput, maxNumSensor: Int ): ValidationResult
 }
 
+/**
+ * Extractor generic form class.
+ */
 object ExtractorForm{
   import play.api.data.Form
   import play.api.data.Forms._
-
+  /**
+   * Returns a JsObject with custom format for errors
+   * general key is for errors not related with fields but with the entire extractor
+   * @param errors
+   * @return
+   */
   def formatErrorMessage(errors: Seq[FormError]) : JsObject= {
     Json.obj{
       "errors" -> errors.map( error => {
@@ -47,6 +80,7 @@ object ExtractorForm{
 
   val form = Form(
       mapping(
+        "id" -> longNumber(min=0),
         "type" -> nonEmptyText.verifying("Bad type",ExtractorType.isExtractorType(_)),
         "dataSchema" -> mapping(
           "sourceID" -> longNumber(min=0),
@@ -55,15 +89,22 @@ object ExtractorForm{
           "measures" -> list(
             mapping(
               "name" -> nonEmptyText,
-              "field" -> nonEmptyText
+              "field" -> nonEmptyText,
+              "measureID" -> longNumber(min=0)
             )(Measure.apply)(Measure.unapply)
           ).verifying("No measures", _.size > 0)
         )(DataSchema.apply)(DataSchema.unapply),
         "IOConfig" -> mapping(
-          "address" -> nonEmptyText,
-          "jsonPath" -> optional(text),
-          "freq" -> optional(longNumber(min=1))
-        )(IOConfig.apply)(IOConfig.unapply)
+          "inputConfig" -> mapping(
+            "address" -> nonEmptyText,
+            "jsonPath" -> optional(text),
+            "freq" -> optional(longNumber(min=1))
+            )(InputConfigForm.apply)(InputConfigForm.unapply),
+          "kafkaConfig" -> mapping(
+            "topic" -> nonEmptyText, //Aquí no se checkea la validez del server
+            "server" -> nonEmptyText
+          )(KafkaConfig.apply)(KafkaConfig.unapply)
+        )(IOConfigForm.apply)(IOConfigForm.unapply)
       )(ExtractorFormInput.apply) (ExtractorFormInput.unapply).verifying(schemaMappingCheck)
     )
 }

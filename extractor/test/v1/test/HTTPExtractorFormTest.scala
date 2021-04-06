@@ -1,16 +1,24 @@
 package v1.test
 
+import org.mockito.MockitoSugar
 import org.scalatestplus.play._
 import play.api.libs.json.Json
 import play.api.mvc.Result
+import play.api.mvc.Results.Created
 import play.api.test.Helpers.{POST, contentAsJson, contentAsString, defaultAwaitTimeout, status}
 import play.api.test.{FakeRequest, Helpers}
-import v1.extractor.ExtractorController
+import v1.extractor.{ExtractorController, ExtractorForm, ExtractorFormInput, ExtractorServiceImpl}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class HTTPExtractorFormTest extends PlaySpec{
-  val controller = new ExtractorController(Helpers.stubControllerComponents())
+
+class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
+
+  val serviceImplMock = mock[ExtractorServiceImpl]
+  val extDataMock = mock[ExtractorFormInput]
+  when(serviceImplMock.postExtractor(extDataMock)).thenReturn(Future{Created("Ok")})
+  val controller = new ExtractorController(Helpers.stubControllerComponents(), serviceImplMock)
 
   val addressJsonPath = "https://run.mocky.io/v3/dec8605f-60b5-4517-bcba-427ac5e316f4"
   val addressSingleSource = "https://run.mocky.io/v3/f6abb769-7fc6-4e19-9313-e09096de138c"
@@ -21,6 +29,7 @@ class HTTPExtractorFormTest extends PlaySpec{
   "A post request of an http source" must {
     "fail when url is not responding" in {
       val json = Json.obj(
+        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
           "sourceID" -> 1,
@@ -29,15 +38,21 @@ class HTTPExtractorFormTest extends PlaySpec{
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "temp",
-              "field" -> "tempField"
+              "field" -> "tempField",
+              "measureID" -> 2
             )
           )
         ),
         "IOConfig" -> Json.obj(
-          "address" -> "local",
-          "jsonPath" -> "$",
-          "freq" -> "1"
-        )
+          "inputConfig" -> Json.obj(
+            "address" -> "local",
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          ))
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -55,6 +70,7 @@ class HTTPExtractorFormTest extends PlaySpec{
     }
     "fail if no jsonPath or freq provided" in {
       val json = Json.obj(
+        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
           "sourceID" -> 1,
@@ -63,13 +79,19 @@ class HTTPExtractorFormTest extends PlaySpec{
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "temp",
-              "field" -> "tempField"
+              "field" -> "tempField",
+              "measureID" -> 1
             )
           )
         ),
         "IOConfig" -> Json.obj(
-          "address" -> "local"
-        )
+          "inputConfig" -> Json.obj(
+            "address" -> addressList,
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          ))
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -92,6 +114,7 @@ class HTTPExtractorFormTest extends PlaySpec{
     "fail if provided schema cant match original one" in {
 
       val json = Json.obj(
+        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
           "sourceID" -> 1,
@@ -100,15 +123,21 @@ class HTTPExtractorFormTest extends PlaySpec{
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "temp",
-              "field" -> "tempField"
+              "field" -> "tempField",
+              "measureID" -> 2
             )
           )
         ),
         "IOConfig" -> Json.obj(
-          "address" -> addressList,
-          "jsonPath" -> "$",
-          "freq" -> 1
-        )
+          "inputConfig" -> Json.obj(
+            "address" -> addressList,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          ))
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -132,6 +161,7 @@ class HTTPExtractorFormTest extends PlaySpec{
     "fail if provided source data types are wrong" in {
 
       val json = Json.obj(
+        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
           "sourceID" -> 1,
@@ -140,19 +170,26 @@ class HTTPExtractorFormTest extends PlaySpec{
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "ocupation",
-              "field" -> "ayto:ocupacion"
+              "field" -> "ayto:ocupacion",
+              "measureID" -> 2
             ),
             Json.obj(
               "name"-> "intensity",
-              "field" -> "ayto:intensidad"
+              "field" -> "ayto:intensidad",
+              "measureID" -> 1
             ),
           )
         ),
         "IOConfig" -> Json.obj(
-          "address" -> wrongTypeAdress,
-          "jsonPath" -> "$",
-          "freq" -> 1
-        )
+          "inputConfig" -> Json.obj(
+            "address" -> wrongTypeAdress,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          ))
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -174,6 +211,7 @@ class HTTPExtractorFormTest extends PlaySpec{
     "fail if source content type is not JSON" in{
 
       val json = Json.obj(
+        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
           "sourceID" -> 1,
@@ -182,19 +220,27 @@ class HTTPExtractorFormTest extends PlaySpec{
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "ocupation",
-              "field" -> "ayto:ocupacion"
+              "field" -> "ayto:ocupacion",
+              "measureID" -> 2
             ),
             Json.obj(
               "name"-> "intensity",
-              "field" -> "ayto:intensidad"
+              "field" -> "ayto:intensidad",
+              "measureID" -> 1
             ),
           )
         ),
         "IOConfig" -> Json.obj(
-          "address" -> wrongContentType,
-          "jsonPath" -> "$",
-          "freq" -> 1
-        )
+          "inputConfig" -> Json.obj(
+            "address" -> wrongContentType,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          ))
+
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -215,6 +261,7 @@ class HTTPExtractorFormTest extends PlaySpec{
     "fail if jsonPath is wrong" in {
 
       val json = Json.obj(
+        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
           "sourceID" -> 1,
@@ -223,19 +270,26 @@ class HTTPExtractorFormTest extends PlaySpec{
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "ocupation",
-              "field" -> "ayto:ocupacion"
+              "field" -> "ayto:ocupacion",
+              "measureID" -> 2
             ),
             Json.obj(
               "name"-> "intensity",
-              "field" -> "ayto:intensidad"
+              "field" -> "ayto:intensidad",
+              "measureID" -> 1
             ),
           )
         ),
         "IOConfig" -> Json.obj(
-          "address" -> addressJsonPath,
-          "jsonPath" -> "$",
-          "freq" -> 1
-        )
+          "inputConfig" -> Json.obj(
+            "address" -> addressJsonPath,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          ))
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -243,6 +297,7 @@ class HTTPExtractorFormTest extends PlaySpec{
       val result: Future[Result] = controller.post.apply(request)
       val response = contentAsJson(result)
 
+      println(contentAsString(result))
 
       status(result) mustBe 400
     }
@@ -253,6 +308,7 @@ class HTTPExtractorFormTest extends PlaySpec{
         Tuple2(addressList,"$"))
       correctAdresses.foreach( tuple => {
         val json = Json.obj(
+          "id" -> 1,
           "type" -> "http",
           "dataSchema" -> Json.obj(
             "sourceID" -> 1,
@@ -261,30 +317,36 @@ class HTTPExtractorFormTest extends PlaySpec{
             "measures" -> Json.arr(
               Json.obj(
                 "name"-> "ocupation",
-                "field" -> "ayto:ocupacion"
+                "field" -> "ayto:ocupacion",
+                "measureID" -> 2
               ),
               Json.obj(
                 "name"-> "intensity",
-                "field" -> "ayto:intensidad"
+                "field" -> "ayto:intensidad",
+                "measureID" -> 1
               ),
             )
           ),
           "IOConfig" -> Json.obj(
-            "address" -> tuple._1,
-            "jsonPath" -> tuple._2,
-            "freq" -> 1
-          )
+            "inputConfig" -> Json.obj(
+              "address" -> tuple._1,
+              "jsonPath" -> tuple._2,
+              "freq" -> 1
+            ),
+            "kafkaConfig" -> Json.obj(
+              "topic" -> "test",
+              "server" -> "localhost:9092"
+            ))
         )
-        val request = FakeRequest(POST, "/v1/extractor")
-          .withJsonBody(json)
-
-        val result: Future[Result] = controller.post.apply(request)
-        if (status(result) == 400){
-          println(tuple._2)
-          println(contentAsString(result))
+        val correctValidation = ExtractorForm.form.bind(json,100000).fold(
+          formWithErrors => {
+            false
+          },
+          extData => {
+          true
         }
-
-        status(result) mustBe 201
+        )
+        correctValidation mustBe true
       })
 
 
