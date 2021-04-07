@@ -16,7 +16,6 @@ import java.time.LocalDateTime
 object Extractor{
   sealed trait Command extends CborSerializable
 
-
   /**
    * Command send to shutdown the actor in a synchronous and graceful way.
    * @param replyTo

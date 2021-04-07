@@ -232,7 +232,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
       entityRef.askWithStatus(ref => ExtractorGuardianEntity.getStatus(ref))
     val result: Future[Result] = reply.transformWith{
       case Success(status) =>
-        if (status.status == "stopped"){
+        if (status.status == "stopped" || status.status == "error"){
             val resultStart = entityRef.askWithStatus(ref => ExtractorGuardianEntity.startExtractor(ref))
             resultStart.transformWith{
               case Success(_) =>
@@ -244,14 +244,14 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
               case Failure(_) =>
                 Future(BadRequest(JSONError.format(
                   Json.obj(
-                    "state" -> "Fail while stopping extractor"
+                    "state" -> "Fail while starting extractor"
                   ))))
             }
           }
         else{
           Future(BadRequest(JSONError.format(
             Json.obj(
-              "state" -> "Extractor is not stopped"
+              "state" -> "Extractor is not stopped or failed"
             ))))
         }
       case Failure(_) =>

@@ -27,7 +27,9 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.{DurationInt, FiniteDuration, MILLISECONDS}
 import scala.util.{Failure, Success}
 
-
+/**
+ * Object implementing the Akka stream for extracting data in json format from an HTTP endpoint
+ */
 case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
   /**
    * Extract entity data from http response in an akka stream

@@ -23,6 +23,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future} //Para experimentación
 
+/**
+ * Object containing functions for validating Http schema inputs
+ */
 object HttpSchemaValidator extends SchemaValidator{
 
   implicit val actorSystem: ActorSystem = akka.actor.ActorSystem("application") //getting play! actor system

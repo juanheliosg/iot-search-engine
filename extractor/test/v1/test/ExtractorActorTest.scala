@@ -162,14 +162,10 @@ class ExtractorActorTest extends ScalaTestWithActorTestKit(ExtractorTestSpec.con
       eventSourcedTestKit.runCommand[StatusReply[Done]](ref => ExtractorGuardianEntity.startExtractor(ref))
 
 
-      var result = eventSourcedTestKit.runCommand[StatusReply[Status]]( ref => ExtractorGuardianEntity.getStatus(ref))
-      var isStarting = result.reply.getValue.status == "starting"
-      while (isStarting){
-        result = eventSourcedTestKit.runCommand[StatusReply[Status]]( ref => ExtractorGuardianEntity.getStatus(ref))
-        isStarting = result.reply.getValue.status == "starting"
-      }
+      val result = waitUntilStarted
       result.stateOfType[ExtractorGuardianEntity.FailedExtractor].state shouldBe "error"
     }
+
     "pass to Running state if stream is working" in{
 
       eventSourcedTestKit.runCommand[StatusReply[Summary]](ref => ExtractorGuardianEntity.updateExtractor(extData, ref))
@@ -178,8 +174,22 @@ class ExtractorActorTest extends ScalaTestWithActorTestKit(ExtractorTestSpec.con
       val result = waitUntilStarted
 
       result.stateOfType[ExtractorGuardianEntity.RunningExtractor].state shouldBe "running"
+    }
+    "restart failed extractor with start command" in {
+      val kafkaConfig = new KafkaConfig("xd","localfail")
+      val config = IOConfig(inputConfig, kafkaConfig)
+      val extData = ExtractorState(schema,config,ExtractorType.Http)
+
+      eventSourcedTestKit.runCommand[StatusReply[Summary]](ref => ExtractorGuardianEntity.updateExtractor(extData, ref))
+      eventSourcedTestKit.runCommand[StatusReply[Done]](ref => ExtractorGuardianEntity.startExtractor(ref))
+
+      val result = waitUntilStarted
+      result.stateOfType[ExtractorGuardianEntity.FailedExtractor].state shouldBe "error"
+      val result2 = eventSourcedTestKit.runCommand[StatusReply[Done]](ref => ExtractorGuardianEntity.startExtractor(ref))
+      result2.stateOfType[ExtractorGuardianEntity.StartingExtractor].state shouldBe "starting"
 
     }
+
     "handle stopExtractor passing to stopped state and then restarting again" in {
       eventSourcedTestKit.runCommand[StatusReply[Summary]](ref => ExtractorGuardianEntity.updateExtractor(extData, ref))
       eventSourcedTestKit.runCommand[StatusReply[Done]](ref => ExtractorGuardianEntity.startExtractor(ref))
@@ -193,6 +203,7 @@ class ExtractorActorTest extends ScalaTestWithActorTestKit(ExtractorTestSpec.con
       resultRunning.stateOfType[ExtractorGuardianEntity.RunningExtractor].state shouldBe "running"
 
     }
+
     "update extractor from running state" in {
       eventSourcedTestKit.runCommand[StatusReply[Summary]](ref => ExtractorGuardianEntity.updateExtractor(extData, ref))
       eventSourcedTestKit.runCommand[StatusReply[Done]](ref => ExtractorGuardianEntity.startExtractor(ref))

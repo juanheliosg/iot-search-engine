@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 /**
  * Persistence actor who stores the extractor state.
- * Is father of the real extractor actor.
+ * This actor controls and supervise the Akka Streaming actor.
  */
 object ExtractorGuardianEntity{
   sealed trait Command extends CborSerializable
@@ -224,7 +224,7 @@ object ExtractorGuardianEntity{
             context.stop(context.child("extractor").get)
           Effect.persist(ExtractorStopped).thenReply(replyTo)(_ => StatusReply.Ack)
         case `failureOnExtractor` =>
-          //nunca hay un failure realmente cuan
+          //Si está haciendo restarting
           if (isUpdating)
             Effect.noReply
           else
@@ -335,6 +335,10 @@ object ExtractorGuardianEntity{
           Effect.persist(ExtractorBeganStarting).thenReply(replyTo)(_ => StatusReply.Ack)
         case getExtractor(replyTo) => Effect.reply(replyTo)(StatusReply.Success(
           Summary(extractorState,Status(entityID,state))))
+        case startExtractor(replyTo) =>
+          Effect.persist(ExtractorBeganStarting)
+            .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(extractorState, context, playActorConfig))
+            .thenReply(replyTo)(_ => StatusReply.Ack)
         case getStatus(replyTo) => Effect.reply(replyTo)(StatusReply.Success(Status(entityID,state)))
         case _ => Effect.unhandled.thenNoReply()
       }
@@ -342,6 +346,7 @@ object ExtractorGuardianEntity{
     override def applyEvent(event: Event, context: ActorContext[Command], playActorConfig: PlayActorConfig): ExtractorGuardian = {
       event match{
         case extractorUpdated(extData) => StoppedExtractor(entityID, extData)
+        case ExtractorBeganStarting => StartingExtractor(entityID, extractorState)
         case _ => throw new IllegalStateException(s"Unexpected event [$event] in state ErrorState")
       }
     }
