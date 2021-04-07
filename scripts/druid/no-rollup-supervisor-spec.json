@@ -1,0 +1,61 @@
+{
+  "type": "kafka",
+  "dataSchema": {
+    "dataSource": "tseriesdb",
+    "timestampSpec": {
+      "column": "timestamp",
+      "format": "iso"
+    },
+    "dimensionsSpec": {
+      "dimensions": [
+          {"type": "long", "name": "seriesID" },
+          {"type": "long", "name": "measureID" },
+          {"type": "long", "name": "sourceID" },
+          {"type": "string", "name": "name" } 
+      ]
+    },
+    "metricsSpec": [
+      {
+        "name": "count",
+        "type": "count"
+      },
+      {
+        "name": "measure",
+        "fieldName": "measure",
+        "type": "doubleSum"
+      },
+      {
+        "name": "value_min",
+        "fieldName": "measure",
+        "type": "doubleMin"
+      },
+      {
+        "name": "value_max",
+        "fieldName": "measure",
+        "type": "doubleMax"
+      }
+    ],
+    "granularitySpec": {
+      "type": "uniform",
+      "segmentGranularity": "HOUR",
+      "queryGranularity": "NONE",
+      "rollup": false 
+    }
+  },
+  "ioConfig": {
+    "topic": "tseries",
+    "inputFormat": {
+      "type": "json"
+    },
+    "consumerProperties": {
+      "bootstrap.servers": "kafka:9092"
+    },
+    "taskCount": 1,
+    "replicas": 1,
+    "taskDuration": "PT1H"
+  },
+  "tuningConfig": {
+    "type": "kafka",
+    "maxRowsPerSegment": 5000000
+  }
+}
