@@ -4,7 +4,7 @@
     "dataSource": "tseriesdb",
     "timestampSpec": {
       "column": "timestamp",
-      "format": "auto"
+      "format": "iso"
     },
     "dimensionsSpec": {
       "dimensions": [
@@ -12,10 +12,6 @@
           {"type": "long", "name": "measureID" },
           {"type": "long", "name": "sourceID" },
           {"type": "string", "name": "name" } 
-      ],
-      "dimensionExclusions": [
-        "timestamp",
-        "measure"
       ]
     },
     "metricsSpec": [
@@ -24,7 +20,7 @@
         "type": "count"
       },
       {
-        "name": "value_sum",
+        "name": "measure",
         "fieldName": "measure",
         "type": "doubleSum"
       },
