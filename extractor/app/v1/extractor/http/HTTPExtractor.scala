@@ -65,21 +65,29 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
       val jsonMeasures = JsonParser(rawSensorData).asJsObject.fields
       val sensorID = jsonMeasures.get(dataSchema.sensorIDField).get.toString().replace("\"","")
       val stringSourceID = dataSchema.sourceID.toString
-      val measures = dataSchema.measures.map(measure => {
+      val measures = dataSchema.measures.flatMap(measure => {
         val measureIDString = measure.measureID.toString
-        JsObject(
-          Map(
-            "seriesID" -> new JsNumber(dataSchema.composeUniqueSerieID(stringSourceID, measureIDString, sensorID)),
-            "sensorID" -> new JsNumber(sensorID.toLong),
-            "timestamp" -> jsonMeasures(dataSchema.timestampField),
-            "sourceID" -> new JsNumber(dataSchema.sourceID),
-            "measure" -> new JsNumber(jsonMeasures(measure.field).convertTo[String].toDouble),
-            "measureID" -> new JsNumber(measure.measureID),
-            "name" -> new JsString(measure.name)
-          ))
+        val strMeasure = jsonMeasures(measure.field).convertTo[String]
+        if (strMeasure.isEmpty)
+          None
+        else {
+          Some(
+          JsObject(
+            Map(
+              "seriesID" -> new JsNumber(dataSchema.composeUniqueSerieID(stringSourceID, measureIDString, sensorID)),
+              "sensorID" -> new JsNumber(sensorID.toLong),
+              "timestamp" -> jsonMeasures(dataSchema.timestampField),
+              "sourceID" -> new JsNumber(dataSchema.sourceID),
+              "measure" -> new JsNumber(strMeasure.toDouble),
+              "measureID" -> new JsNumber(measure.measureID),
+              "name" -> new JsString(measure.name)
+            ))
+          )
+        }
       })
-    if (measures.isEmpty) throw new RuntimeException("Measure empty")
-      measures
+    measures
+
+
 
   }
 

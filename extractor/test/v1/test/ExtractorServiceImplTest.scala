@@ -177,7 +177,7 @@ class ExtractorServiceImplTest extends PlaySpec
       val expectedResponse = Json.obj(
         "errors" -> Json.arr(
           Json.obj(
-            "state" -> "Extractor is not stopped")
+            "state" -> "Extractor is not stopped or failed")
         )
       )
 

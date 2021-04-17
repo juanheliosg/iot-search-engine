@@ -1,4 +1,4 @@
-package v1.test
+package v1.test.http
 
 import org.mockito.MockitoSugar
 import org.scalatestplus.play._
@@ -23,6 +23,7 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
   val addressJsonPath = "https://run.mocky.io/v3/dec8605f-60b5-4517-bcba-427ac5e316f4"
   val addressSingleSource = "https://run.mocky.io/v3/f6abb769-7fc6-4e19-9313-e09096de138c"
   val addressList =  "https://run.mocky.io/v3/c4017730-abcc-43ac-b28e-5292ddddc9e8"
+  val emptyMeasure = "https://run.mocky.io/v3/08884f55-3e2c-4dd1-a79d-9d2251a7505a"
   val wrongTypeAdress = "https://run.mocky.io/v3/524d0930-1bc4-4d53-94ac-87894624bf42"
   val wrongContentType = "https://run.mocky.io/v3/9f143a4f-b194-40a3-9fae-0f6bd215c018"
 
@@ -301,11 +302,13 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
 
       status(result) mustBe 400
     }
+
     "work if everything is correct" in {
       val correctAdresses = Seq(
         Tuple2(addressJsonPath, "$.resources"),
         Tuple2(addressSingleSource,"$"),
-        Tuple2(addressList,"$"))
+        Tuple2(addressList,"$"),
+        Tuple2(emptyMeasure,"$"))
       correctAdresses.foreach( tuple => {
         val json = Json.obj(
           "id" -> 1,
