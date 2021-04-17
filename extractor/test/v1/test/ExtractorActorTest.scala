@@ -245,10 +245,10 @@ class ExtractorActorTest extends ScalaTestWithActorTestKit(ExtractorTestSpec.con
         .runWith(Sink.seq)
 
       val expectedResult = Set(
-      """{"measure":70.0,"timestamp":"2021-03-23T12:04:00Z","measureID":2,"sensorID":1001,"seriesID":121001,"name":"ocupation","sourceID":1}""",
-      """{"measure":360.0,"timestamp":"2021-03-23T12:04:00Z","measureID":1,"sensorID":1001,"seriesID":111001,"name":"intensity","sourceID":1}""",
-      """{"measure":2.0,"timestamp":"2021-03-23T12:04:00Z","measureID":2,"sensorID":1002,"seriesID":121002,"name":"ocupation","sourceID":1}""",
-      """{"measure":120.0,"timestamp":"2021-03-23T12:04:00Z","measureID":1,"sensorID":1002,"seriesID":111002,"name":"intensity","sourceID":1}"""
+      """{"measure":70.0,"timestamp":"2021-03-23T12:04:00Z","measureID":2,"sensorID":"1001","seriesID":"121001","name":"ocupation","sourceID":1}""",
+      """{"measure":360.0,"timestamp":"2021-03-23T12:04:00Z","measureID":1,"sensorID":"1001","seriesID":"111001","name":"intensity","sourceID":1}""",
+      """{"measure":2.0,"timestamp":"2021-03-23T12:04:00Z","measureID":2,"sensorID":"1002","seriesID":"121002","name":"ocupation","sourceID":1}""",
+      """{"measure":120.0,"timestamp":"2021-03-23T12:04:00Z","measureID":1,"sensorID":"1002","seriesID":"111002","name":"intensity","sourceID":1}"""
       )
 
       val results = Await.result(stream, 5.second).toSet

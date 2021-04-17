@@ -46,7 +46,7 @@ class HTTPExtractorTest extends AnyWordSpec {
 
       val result = HTTPExtractor.parseJSON(rawSensorData,schema)
 
-      val expectedResult = "{\"measure\":420.0,\"timestamp\":\"2021-03-23T12:04:00Z\",\"measureID\":2,\"sensorID\":1001,\"seriesID\":121001,\"name\":\"ocupation\",\"sourceID\":1}"
+      val expectedResult = "{\"measure\":420.0,\"timestamp\":\"2021-03-23T12:04:00Z\",\"measureID\":2,\"sensorID\":\"1001\",\"seriesID\":\"121001\",\"name\":\"ocupation\",\"sourceID\":1}"
       assert(result(0).toString() == expectedResult)
     }
 

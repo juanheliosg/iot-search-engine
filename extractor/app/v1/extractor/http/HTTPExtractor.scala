@@ -74,8 +74,8 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
           Some(
           JsObject(
             Map(
-              "seriesID" -> new JsNumber(dataSchema.composeUniqueSerieID(stringSourceID, measureIDString, sensorID)),
-              "sensorID" -> new JsNumber(sensorID.toLong),
+              "seriesID" -> new JsString(dataSchema.composeUniqueSerieID(stringSourceID, measureIDString, sensorID)),
+              "sensorID" -> new JsString(sensorID),
               "timestamp" -> jsonMeasures(dataSchema.timestampField),
               "sourceID" -> new JsNumber(dataSchema.sourceID),
               "measure" -> new JsNumber(strMeasure.toDouble),

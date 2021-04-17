@@ -3,6 +3,11 @@ import play.api.libs.json._
 import v1.extractor.ExtractorType.ExtractorType
 
 /**
+ * This file consist of the main models used by actors and extractors
+ */
+
+
+/**
  * Represents a sensor measure
  * @param name: represent sensor name measure
  * @param field: mapping field
@@ -28,8 +33,8 @@ case class DataSchema(sourceID: Long, sensorIDField: String, timestampField: Str
    * @param measureID
    * @return identifier
    */
-  def composeUniqueSerieID(sensorID: String, sourceID: String, measureID: String): Long ={
-    (sensorID + sourceID + measureID).replace("\"","").toLong
+  def composeUniqueSerieID(sensorID: String, sourceID: String, measureID: String): String ={
+    (sensorID + sourceID + measureID).replace("\"","")
   }
 }
 object DataSchema{
