@@ -8,7 +8,8 @@
     },
     "dimensionsSpec": {
       "dimensions": [
-          {"type": "long", "name": "seriesID" },
+          {"type": "string", "name": "seriesID" },
+        {"type": "string", "name": "sensorID"},
           {"type": "long", "name": "measureID" },
           {"type": "long", "name": "sourceID" },
           {"type": "string", "name": "name" } 
