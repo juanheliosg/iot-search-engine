@@ -34,9 +34,9 @@ object Dependencies{
    val playScalaTest = "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0"
    val mockitoScala = "org.mockito" %% "mockito-scala" % "1.16.0"
 
-
-
-
+   val slickVersion = "5.0.0"
+   val slick =   "com.typesafe.play" %% "play-slick" % slickVersion
+   val postgresDriver = "org.postgresql" % "postgresql" % "9.4-1206-jdbc42"
 
 
    val commonDeps = Seq(scalaTest % Test, mockitoScala % Test, scalastic, logs, guice)
@@ -45,4 +45,6 @@ object Dependencies{
       akka, akkaPersistence, akkaSharding,clusterSharding, cassandraAkka,
       akkaKafka, akkaStreams, alpakkaJSON, akkaSerialization, sprayJson,
       kafkaClient, kafkaTestContainers % Test, cassandraTestContainer % Test)
+
+   val adminDeps = Seq(playScalaTest % Test, slick, postgresDriver)
 }
