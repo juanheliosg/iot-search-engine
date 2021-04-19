@@ -169,6 +169,7 @@ services:
       CASSANDRA_CONTACT_POINTS: cassandra:9042
 
 
+
 networks:
   default:
     ipam:
