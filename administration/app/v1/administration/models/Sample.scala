@@ -1,5 +1,6 @@
 package v1.administration.models
 
+import play.api.libs.json.{Format, Json}
 import v1.administration.models.TimeUnit.TimeUnit
 
 /**
@@ -53,4 +54,7 @@ object TimeUnit extends Enumeration{
     def unapply(s: String): Boolean =
       (s == toString)
   }
+}
+object Sample{
+  implicit val format = Json.format[Sample]
 }

@@ -1,5 +1,7 @@
 package v1.administration.models
 
+import play.api.libs.json.{Format, Json}
+
 /**
  * Represents a measure taken by the sensors of the source.
  *
@@ -9,3 +11,6 @@ package v1.administration.models
  * @param description
  */
 case class Measure(id: Long, name: String, unit: String, description: Option[String])
+object Measure{
+  implicit val format = Json.format[Measure]
+}
