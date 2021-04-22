@@ -11,10 +11,13 @@ import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.{AbstractController, ControllerComponents, Result}
 import v1.extractor.actors.{ExtractorGuardianEntity, PlayActorConfig}
+import v1.extractor.models.extractor.config.{HttpInputConfig, InputConfig}
+import v1.extractor.models.extractor.{ExtractorGetResponse, ExtractorState, ExtractorStatusResponse, IOConfig}
 
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Random, Success}
 
 
 /**
@@ -34,6 +37,9 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
 
   private val logger = LoggerFactory.getLogger(getClass)
   private val playActorConfig = new PlayActorConfig(actorSystem, config)
+  private val rng = new Random()
+  private var numOfRepeatedPost = 0
+  private val collisionThreshold = 10
 
   /**
    * Sharding region for extractor guardian entities
@@ -60,7 +66,23 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
     }
 
     val IoConfig = IOConfig(inputConfig, extData.ioConfig.kafkaConfig)
-    ExtractorState(extData.dataSchema,IoConfig, extractorType)
+    ExtractorState(extData.dataSchema,IoConfig, extractorType, extData.metadata)
+  }
+
+  /**
+   * Generate a likely unique id based in a timestamp value and a random value.
+   * It is a 8 number string. The first 4 characters are selected from unix epoch time
+   * The last 4 from a rng number
+   * @return a 8 digit string
+   */
+   def generateUniqueId(): String = {
+    val zdt: ZonedDateTime = LocalDateTime.now().atZone(ZoneId.of("America/Denver"))
+    val millis = zdt.toInstant.toEpochMilli.toString
+    val timestampPart = millis.substring(millis.length-4,millis.length)
+    rng.setSeed(millis.toLong)
+    val randomPart = for(i <- 1 to 4) yield rng.nextInt(10).toString
+
+    timestampPart+randomPart.mkString("")
   }
 
   /**
@@ -68,8 +90,8 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
    * @param id entity id
    * @return extractorGetResponse object containing id, status, type, schema and config
    */
-  def getExtractor(id: Long): Future[Result] = {
-    val extractorId = id.toString
+  def getExtractor(id: String): Future[Result] = {
+    val extractorId = id
     val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId)
 
     val reply: Future[ExtractorGuardianEntity.Summary] =
@@ -78,11 +100,12 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
       case Success(summary) => Future(Ok(
         Json.toJson(
         new ExtractorGetResponse(
-          extractorId.toLong,
+          extractorId,
           summary.status.status,
           summary.extractorState.extractorType.toString,
           summary.extractorState.schema,
-          summary.extractorState.config
+          summary.extractorState.config,
+          summary.extractorState.metadata
         ))))
       case Failure(StatusReply.ErrorMessage(_)) =>
         //We dont delete the created actor because a post method would be valid
@@ -106,21 +129,28 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
    * @return Final result
    */
   def postExtractor(extData: ExtractorFormInput): Future[Result] = {
-    val extractorId = extData.id
 
-    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId.toString)
+    val extractorId = generateUniqueId()
+    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey,extractorId)
     val reply = entityRef.askWithStatus(ref => ExtractorGuardianEntity.getStatus(ref))
 
     val result = reply.flatMap(status =>
       if(status.status != "not started"){ //change to enum
-        logger.info(s"Request tried to repost extractor with id ${extData.id} ")
-        Future(BadRequest(JSONError.format(
-          Json.obj(
-            "id" -> "Extractor with same ID"
+        logger.info(s"ID collision with id ${extractorId} ")
+        numOfRepeatedPost += 1
+        if (numOfRepeatedPost > collisionThreshold){
+          Future(InternalServerError(JSONError.format(
+            Json.obj(
+              "id" -> "More than 10 collisions, contact server admin"
+            ))
           ))
-        ))
+        }
+        else {
+          postExtractor(extData)
+        }
       }
       else{
+        numOfRepeatedPost = 0
         val newExtractor = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId.toString)
         val extState = formToState(extData)
         val reply = newExtractor.askWithStatus(ref => ExtractorGuardianEntity.updateExtractor(extState,ref))
@@ -129,7 +159,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
           newExtractor.ask(ref => ExtractorGuardianEntity.startExtractor(ref))
           Created(
             Json.toJson(new ExtractorStatusResponse(
-              response.status.id.toLong, "starting"
+              response.status.id, "starting"
             ))
           )
         })
@@ -147,12 +177,13 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
   /**
    * Update the extractor identified by the id and restart it.
    * Extractor identified by id must have been started
-   * @param id extractor to be updated
-   * @param extData data for updating
+   * @param id
+   * @param extData
+   * @return
    */
-  def updateExtractor(id: Long, extData: ExtractorFormInput) : Future[Result] = {
+  def updateExtractor(id: String, extData: ExtractorFormInput) : Future[Result] = {
     val extractorId = id
-    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId.toString)
+    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId)
     val reply = entityRef.askWithStatus(ref => ExtractorGuardianEntity.getStatus(ref))
 
     val result = reply.flatMap(status =>
@@ -163,14 +194,14 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
           logger.info(s"Success updating with $extractorId id")
           Ok(
             Json.toJson(new ExtractorStatusResponse(
-              response.status.id.toLong, response.status.status
+              response.status.id, response.status.status
             ))
           )
         })
         result
       }
       else{
-        logger.info(s"Request tried to update extractor with id ${extData.id} but extractor has not been posted")
+        logger.info(s"Request tried to update extractor with id ${id} but extractor has not been posted")
         Future(BadRequest(JSONError.format(
           Json.obj(
             "id" -> "Extractor with provided id does not exists"
@@ -191,9 +222,9 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
    * if cant found the id it delete the not started instance
    * @param id extractor id
    */
-  def deleteExtractor(id: Long): Future[Result] = {
+  def deleteExtractor(id: String): Future[Result] = {
 
-    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, id.toString)
+    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, id)
     entityRef ! ExtractorGuardianEntity.ExterminateExtractor
 
 
@@ -225,8 +256,8 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
    * @param id entity id
    * @return status of the current actor
    */
-  def startExtractor(id: Long): Future[Result] = {
-    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, id.toString)
+  def startExtractor(id: String): Future[Result] = {
+    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, id)
 
     val reply: Future[ExtractorGuardianEntity.Status] =
       entityRef.askWithStatus(ref => ExtractorGuardianEntity.getStatus(ref))
@@ -273,8 +304,8 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
    * @param id entity id
    * @return status of the current actor
    */
-  def stopExtractor(id: Long): Future[Result] = {
-    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, id.toString)
+  def stopExtractor(id: String): Future[Result] = {
+    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, id)
 
     val reply: Future[ExtractorGuardianEntity.Status] =
       entityRef.askWithStatus(ref => ExtractorGuardianEntity.getStatus(ref))

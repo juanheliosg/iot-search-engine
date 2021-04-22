@@ -2,6 +2,7 @@ package v1.test
 
 
 import akka.util.Timeout
+import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -12,6 +13,9 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.{contentAsJson, contentAsString, status}
 import v1.extractor._
+import v1.extractor.models.extractor.config.{HttpInputConfig, InputConfig, KafkaConfig}
+import v1.extractor.models.extractor.{DataSchema, ExtractorGetResponse, MeasureField}
+import v1.extractor.models.metadata.{Location, Metadata, Sample}
 
 import scala.concurrent.duration.DurationInt
 
@@ -19,6 +23,7 @@ import scala.concurrent.duration.DurationInt
 class ExtractorServiceImplTest extends PlaySpec
   with GuiceOneAppPerSuite
   with BeforeAndAfterEach
+  with MockitoSugar
 {
   implicit val timeout: Timeout = Timeout(60.seconds)
   //Cassandra container is shared between all tests
@@ -51,13 +56,15 @@ class ExtractorServiceImplTest extends PlaySpec
   val service: ExtractorServiceImpl = app.injector.instanceOf[ExtractorServiceImpl]
 
   val sensorAddress =  "https://run.mocky.io/v3/c4017730-abcc-43ac-b28e-5292ddddc9e8"
-  val schema = new DataSchema(
-    2, "ayto:idSensor", "dc:modified",
-    List(new Measure("ocupation","ayto:ocupacion",2),
-      new Measure("intensity", "ayto:intensidad",1))
-  )
+  val schema = new DataSchema("ayto:idSensor", "dc:modified", List(new MeasureField("ocupation","ayto:ocupacion","veh/h",Some("Vehículos por hora sobre una espiga")),
+    new MeasureField("intensity", "ayto:intensidad","%")))
 
   val freq = 3000
+  val metadata = Metadata("traffic-santander",Some("Santander traffic flow sensors"),Seq("traffic","static"),
+    new Sample(1,"seconds"),
+    new Location("santander city",city=Some("Santander"),region=Some("Santander"),country=Some("Spain")),
+    url = Some("http://datos.santander.es/dataset/?id=datos-trafico"))
+
   val inputConfig: InputConfigForm = InputConfigForm(sensorAddress, Some("$"), Some(freq))
   val config: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
 
@@ -66,13 +73,15 @@ class ExtractorServiceImplTest extends PlaySpec
 
   "getExtractor" must{
     "return correct result if previous extractor has been posted" in {
-      val extInput = ExtractorFormInput(
-        1, ExtractorType.Http.toString,schema, config)
+      val extInput = ExtractorFormInput( ExtractorType.Http.toString,schema, config, metadata)
       val resultPost = service.postExtractor(extInput)
-      println(contentAsString(resultPost))
+      val response = contentAsJson(resultPost)
+      val respId = (response \ "id").as[String]
+
       status(resultPost) mustBe 201 //Created code
 
-      val resultGet = service.getExtractor(extInput.id)
+
+      val resultGet = service.getExtractor(respId)
       val content = contentAsJson(resultGet).as[ExtractorGetResponse]
       status(resultGet) mustBe 200 //Ok code
       content.status == "not started" mustBe false
@@ -82,7 +91,7 @@ class ExtractorServiceImplTest extends PlaySpec
       )))
     }
     "fail if no extractor with same id has been posted" in{
-      val result = service.getExtractor(2)
+      val result = service.getExtractor("2")
       val expectedResponse = Json.obj(
         "errors" -> Json.arr(
           Json.obj("id" -> "Extractor with provided id does not exists")
@@ -95,23 +104,27 @@ class ExtractorServiceImplTest extends PlaySpec
   }
 
   "postExtractor" must {
-    "return badRequest if other extractor is posted with same id" in {
-      val extInput = ExtractorFormInput(
-        2, ExtractorType.Http.toString,schema, config)
+    "fail if several collisions are repeated" in {
+      val spyService = spy(service)
 
-      val result = service.postExtractor(extInput)
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+
+      val result = spyService.postExtractor(extInput)
+      val response = contentAsJson(result)
+      val respId = (response \ "id").as[String]
+
+      when(spyService.generateUniqueId()).thenReturn(respId)
       status(result) mustBe 201 //Created code
 
-      val resultRepeated = service.postExtractor(extInput)
-      status(resultRepeated) mustBe 400 //Bad request
+      val resultRepeated = spyService.postExtractor(extInput)
+      status(resultRepeated) mustBe 500
     }
   }
   "putExtractor" must{
     "fail if wrong extractor id" in{
-      val extInputPut = ExtractorFormInput(
-        23, ExtractorType.Http.toString,schema, config)
+      val extInputPut = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
-      val result = service.updateExtractor(23,extInputPut)
+      val result = service.updateExtractor("2",extInputPut)
       val expectedResponse = Json.obj(
         "errors" -> Json.arr(
           Json.obj("id" -> "Extractor with provided id does not exists")
@@ -122,44 +135,41 @@ class ExtractorServiceImplTest extends PlaySpec
     }
 
     "update extractor if everything ok" in {
-      val newId = 5
-      val id = 2
+      val newIdField = "Ayto:newfield"
 
-      val extInputPost = ExtractorFormInput(
-        id, ExtractorType.Http.toString,this.schema, config)
+      val extInputPost = ExtractorFormInput(ExtractorType.Http.toString,this.schema, config, metadata)
 
       val resultPost = service.postExtractor(extInputPost)
-      println(contentAsString(resultPost))
+      val response = contentAsJson(resultPost)
+      val respId = (response \ "id").as[String]
 
-      val schema = new DataSchema(
-        newId, "ayto:idSensor", "dc:modified",
-        List(new Measure("ocupation","ayto:ocupacion",2),
-          new Measure("intensity", "ayto:intensidad",1))
-      )
-      val extInput = ExtractorFormInput(
-        id, ExtractorType.Http.toString,schema, config)
+      val schema = new DataSchema(newIdField, "dc:modified", List(new MeasureField("ocupation","ayto:ocupacion","veh/h",Some("Vehículos por hora sobre una espiga")),
+        new MeasureField("intensity", "ayto:intensidad","%",None)))
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
-      val result = service.updateExtractor(id,extInput)
+      val result = service.updateExtractor(respId,extInput)
       status(result) mustBe 200
 
-      val resultGet = service.getExtractor(id)
+      val resultGet = service.getExtractor(respId)
       status(resultGet) mustBe 200
 
       val content = contentAsJson(resultGet).as[ExtractorGetResponse]
 
       status(resultGet) mustBe 200 //Ok code
       content.status == "not started" mustBe false
-      content.dataSchema.sourceID mustBe newId
+      content.dataSchema.sensorIDField mustBe newIdField
 
     }
   }
   "deleteExtractor" must {
     "delete an extractor if everything correct" in {
-      val extInput = ExtractorFormInput(
-        2, ExtractorType.Http.toString,schema, config)
-      service.postExtractor(extInput)
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+      val resultPost = service.postExtractor(extInput)
 
-      val result = service.deleteExtractor(2)
+      val response = contentAsJson(resultPost)
+      val respId = (response \ "id").as[String]
+
+      val result = service.deleteExtractor(respId)
       println(contentAsString(result))
       status(result) mustBe 204 //No content response
     }
@@ -167,11 +177,12 @@ class ExtractorServiceImplTest extends PlaySpec
   "startExtractor" must {
     "fail if extractor is not stopped" in{
       val id = 222
-      val extInput = ExtractorFormInput(
-        id, ExtractorType.Http.toString,schema, config)
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
       val resultPost = service.postExtractor(extInput)
       status(resultPost) mustBe 201
+      val response = contentAsJson(resultPost)
+      val respId = (response \ "id").as[String]
 
 
       val expectedResponse = Json.obj(
@@ -181,27 +192,27 @@ class ExtractorServiceImplTest extends PlaySpec
         )
       )
 
-      val resultStop = service.startExtractor(id)
+      val resultStop = service.startExtractor(respId)
       status(resultStop) mustBe 400
       contentAsJson(resultStop) mustBe expectedResponse
 
     }
     "startExtractor if everything correct" in {
-      val id = 221
-      val extInput = ExtractorFormInput(
-        id, ExtractorType.Http.toString,schema, config)
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
       val resultPost = service.postExtractor(extInput)
+      val response = contentAsJson(resultPost)
+      val respId = (response \ "id").as[String]
       status(resultPost) mustBe 201
 
-      val resultStop = service.stopExtractor(id)
+      val resultStop = service.stopExtractor(respId)
       status(resultStop) mustBe 200
 
       val expectedResponse = Json.obj(
-        "id" -> id,
+        "id" -> respId,
         "status" -> "starting")
 
-      val resultStart = service.startExtractor(id)
+      val resultStart = service.startExtractor(respId)
       status(resultStart) mustBe 200
       contentAsJson(resultStart) mustBe expectedResponse
 
@@ -209,7 +220,7 @@ class ExtractorServiceImplTest extends PlaySpec
   }
   "stopExtractor" must{
     "fail if extractor is not running or starting" in{
-      val id = 2223
+      val id = "2223"
 
       val resultStop = service.stopExtractor(id)
       val expectedResponse = Json.obj(
@@ -222,17 +233,17 @@ class ExtractorServiceImplTest extends PlaySpec
       contentAsJson(resultStop) mustBe expectedResponse
     }
     "stopExtractor if everything correct" in{
-      val id = 224
-      val extInput = ExtractorFormInput(
-        id, ExtractorType.Http.toString,schema, config)
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
       val resultPost = service.postExtractor(extInput)
       status(resultPost) mustBe 201
+      val response = contentAsJson(resultPost)
+      val respId = (response \ "id").as[String]
 
-      val resultStop = service.stopExtractor(id)
+      val resultStop = service.stopExtractor(respId)
 
       val expectedResponse = Json.obj(
-        "id" -> id,
+        "id" -> respId,
         "status" -> "stopped"
       )
       status(resultStop) mustBe 200

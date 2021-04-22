@@ -34,16 +34,6 @@ lazy val extractor = (project in file("extractor"))
     libraryDependencies ++= extractorDeps,
 ).settings(extractorDockerSettings)
 
-lazy val administration = (project in file("administration"))
-  .enablePlugins(PlayScala, DockerPlugin)
-  .settings(
-    buildSettings,
-    Test / scalaSource :=  baseDirectory.value / "/test/",
-    buildSettings,
-    name := "administration",
-    libraryDependencies ++= adminDeps,
-
-  )
 
 testOptions += Setup( cl =>
   cl.loadClass("org.slf4j.LoggerFactory").

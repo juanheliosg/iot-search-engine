@@ -41,7 +41,7 @@ class ExtractorController @Inject() (val cc: ControllerComponents, val extractor
    */
   def get(id: Long): Action[AnyContent] = Action.async{ implicit request => {
     logger.trace(s"Getting extractor with id $id from request ${request.id}")
-    extractorServiceImpl.getExtractor(id)
+    extractorServiceImpl.getExtractor(id.toString)
     }
   }
 
@@ -59,12 +59,7 @@ class ExtractorController @Inject() (val cc: ControllerComponents, val extractor
       },
       extractorData =>{
         logger.trace("Correct validation of extractor input data, now checking sharding config")
-        if (extractorData.id == id)
-          extractorServiceImpl.updateExtractor(id,extractorData)
-        else
-          Future{BadRequest(JSONError.format(Json.obj(
-            "id" -> s"Url id $id does not match body id ${extractorData.id} fore request ${request.id}"
-          )))}
+        extractorServiceImpl.updateExtractor(id.toString,extractorData)
       }
     )
   }
@@ -77,7 +72,7 @@ class ExtractorController @Inject() (val cc: ControllerComponents, val extractor
    */
   def delete(id: Long): Action[AnyContent] = Action.async{ implicit request => {
     logger.trace(s"Getting extractor with id $id from request ${request.id}")
-    extractorServiceImpl.deleteExtractor(id)
+    extractorServiceImpl.deleteExtractor(id.toString)
     }
   }
 
@@ -88,7 +83,7 @@ class ExtractorController @Inject() (val cc: ControllerComponents, val extractor
    */
   def getStart(id: Long): Action[AnyContent] = Action.async{ implicit request => {
     logger.trace(s"Getting extractor with id $id from request ${request.id}")
-    extractorServiceImpl.startExtractor(id)
+    extractorServiceImpl.startExtractor(id.toString)
     }
   }
 
@@ -99,7 +94,7 @@ class ExtractorController @Inject() (val cc: ControllerComponents, val extractor
    */
   def getStop(id: Long): Action[AnyContent] = Action.async{ implicit request => {
     logger.trace(s"Getting extractor with id $id from request ${request.id}")
-    extractorServiceImpl.stopExtractor(id)
+    extractorServiceImpl.stopExtractor(id.toString)
 
     }
   }

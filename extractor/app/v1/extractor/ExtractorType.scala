@@ -9,7 +9,6 @@ package v1.extractor
 object ExtractorType extends Enumeration {
   type ExtractorType = Value
   val Http = Value("http")
-  val RANDOM_WALK_SYM = Value("rw_sym")
 
   /**
    * Check if string is inside the enum

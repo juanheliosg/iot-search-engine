@@ -30,17 +30,16 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
   "A post request of an http source" must {
     "fail when url is not responding" in {
       val json = Json.obj(
-        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
-          "sourceID" -> 1,
+
           "sensorIDField" -> "id",
           "timestampField" -> "time",
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "temp",
               "field" -> "tempField",
-              "measureID" -> 2
+              "unit" -> "grades"
             )
           )
         ),
@@ -53,7 +52,17 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
           "kafkaConfig" -> Json.obj(
             "topic" -> "test",
             "server" -> "localhost:9092"
-          ))
+          )),
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -71,17 +80,15 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
     }
     "fail if no jsonPath or freq provided" in {
       val json = Json.obj(
-        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
-          "sourceID" -> 1,
           "sensorIDField" -> "id",
           "timestampField" -> "time",
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "temp",
               "field" -> "tempField",
-              "measureID" -> 1
+              "unit" -> "grades"
             )
           )
         ),
@@ -92,7 +99,17 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
           "kafkaConfig" -> Json.obj(
             "topic" -> "test",
             "server" -> "localhost:9092"
-          ))
+          )),
+      "metadata" -> Json.obj(
+        "name" -> "santander-traffic",
+        "sample" -> Json.obj(
+          "freq" -> "1",
+          "unit" -> "seconds"
+        ),
+        "localization" -> Json.obj(
+          "name" -> "Santander"
+        )
+      )
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -113,19 +130,16 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
     }
 
     "fail if provided schema cant match original one" in {
-
       val json = Json.obj(
-        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
-          "sourceID" -> 1,
           "sensorIDField" -> "id",
           "timestampField" -> "time",
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "temp",
               "field" -> "tempField",
-              "measureID" -> 2
+              "unit" -> "grades"
             )
           )
         ),
@@ -138,7 +152,17 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
           "kafkaConfig" -> Json.obj(
             "topic" -> "test",
             "server" -> "localhost:9092"
-          ))
+          )),
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -162,22 +186,20 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
     "fail if provided source data types are wrong" in {
 
       val json = Json.obj(
-        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
-          "sourceID" -> 1,
           "sensorIDField" -> "ayto:idSensor",
           "timestampField" -> "dc:modified",
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "ocupation",
               "field" -> "ayto:ocupacion",
-              "measureID" -> 2
+              "unit" -> "grades"
             ),
             Json.obj(
               "name"-> "intensity",
               "field" -> "ayto:intensidad",
-              "measureID" -> 1
+              "unit" -> "grades"
             ),
           )
         ),
@@ -191,6 +213,18 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
             "topic" -> "test",
             "server" -> "localhost:9092"
           ))
+        ,
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds",
+
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -212,22 +246,20 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
     "fail if source content type is not JSON" in{
 
       val json = Json.obj(
-        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
-          "sourceID" -> 1,
           "sensorIDField" -> "ayto:idSensor",
           "timestampField" -> "dc:modified",
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "ocupation",
               "field" -> "ayto:ocupacion",
-              "measureID" -> 2
+              "unit" -> "grades"
             ),
             Json.obj(
               "name"-> "intensity",
               "field" -> "ayto:intensidad",
-              "measureID" -> 1
+              "unit" -> "grades"
             ),
           )
         ),
@@ -241,7 +273,17 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
             "topic" -> "test",
             "server" -> "localhost:9092"
           ))
-
+        ,
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -262,22 +304,20 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
     "fail if jsonPath is wrong" in {
 
       val json = Json.obj(
-        "id" -> 1,
         "type" -> "http",
         "dataSchema" -> Json.obj(
-          "sourceID" -> 1,
           "sensorIDField" -> "ayto:idSensor",
           "timestampField" -> "dc:modified",
           "measures" -> Json.arr(
             Json.obj(
               "name"-> "ocupation",
               "field" -> "ayto:ocupacion",
-              "measureID" -> 2
+              "unit" -> "grades"
             ),
             Json.obj(
               "name"-> "intensity",
               "field" -> "ayto:intensidad",
-              "measureID" -> 1
+              "unit" -> "grades"
             ),
           )
         ),
@@ -290,7 +330,17 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
           "kafkaConfig" -> Json.obj(
             "topic" -> "test",
             "server" -> "localhost:9092"
-          ))
+          )),
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
       )
       val request = FakeRequest(POST, "/v1/extractor")
         .withJsonBody(json)
@@ -311,22 +361,20 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
         Tuple2(emptyMeasure,"$"))
       correctAdresses.foreach( tuple => {
         val json = Json.obj(
-          "id" -> 1,
           "type" -> "http",
           "dataSchema" -> Json.obj(
-            "sourceID" -> 1,
             "sensorIDField" -> "ayto:idSensor",
             "timestampField" -> "dc:modified",
             "measures" -> Json.arr(
               Json.obj(
                 "name"-> "ocupation",
                 "field" -> "ayto:ocupacion",
-                "measureID" -> 2
+                "unit" -> "veh/h"
               ),
               Json.obj(
                 "name"-> "intensity",
                 "field" -> "ayto:intensidad",
-                "measureID" -> 1
+                "unit" -> "%"
               ),
             )
           ),
@@ -339,7 +387,17 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
             "kafkaConfig" -> Json.obj(
               "topic" -> "test",
               "server" -> "localhost:9092"
-            ))
+            )),
+          "metadata" -> Json.obj(
+            "name" -> "santander-traffic",
+            "sample" -> Json.obj(
+              "freq" -> "1",
+              "unit" -> "seconds"
+            ),
+            "localization" -> Json.obj(
+              "name" -> "Santander"
+            )
+          )
         )
         val correctValidation = ExtractorForm.form.bind(json,100000).fold(
           formWithErrors => {

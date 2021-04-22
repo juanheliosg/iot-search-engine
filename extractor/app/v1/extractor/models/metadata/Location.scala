@@ -1,11 +1,10 @@
-package v1.administration.models
+package v1.extractor.models.metadata
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 
 /**
  * Class representing a location for a source. This may represents the industry or city location where the sensors are isntalled.
  *
- * @param id
  * @param lat     latitude in grades
  * @param long    longitude in grades
  * @param name    name of the location
@@ -14,8 +13,12 @@ import play.api.libs.json.{Format, Json}
  * @param region  region where the city stays
  * @param country
  */
-case class Location(id: Long, lat: Double, long: Double, name: String,
-                    address: Option[String], city: Option[String], region: Option[String], country: Option[String])
+case class Location(name: String,
+                    address: Option[String] = None,
+                    city: Option[String] = None,
+                    region: Option[String] = None,
+                    country: Option[String] = None)
+
 object Location{
   implicit val format = Json.format[Location]
 }

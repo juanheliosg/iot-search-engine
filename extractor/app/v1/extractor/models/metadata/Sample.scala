@@ -1,17 +1,16 @@
-package v1.administration.models
+package v1.extractor.models.metadata
 
-import play.api.libs.json.{Format, Json}
-import v1.administration.models.TimeUnit.TimeUnit
+import play.api.libs.json.Json
 
 /**
  * Represent the sampling intervals of a source.
- * if freq=3 and unit = SECONDS sampling intervals are every 3 seconds
- *
- * @param id
+ * if freq=3 and unit = SECONDS sampling intervals in the original source are every 3 seconds
+ * Stream retrieval frequency can be different.
  * @param freq frequency of sampling
- * @param unit unit of sampling
+ * @param unit unit of sampling used by the original source and not the extractor as an String
  */
-case class Sample(id: Long, freq: Long, unit: TimeUnit)
+case class Sample(freq: Long, unit: String)
+
 
 /**
  * Enum representing different time units for sampling intervals
@@ -33,7 +32,7 @@ object TimeUnit extends Enumeration{
    * @param s
    * @return
    */
-  def isSourceType(s: String) = values.exists(_.toString == s)
+  def isTimeUnit(s: String) = values.exists(_.toString == s)
 
   /**
    * Enables matching against all ExtractorType.values
