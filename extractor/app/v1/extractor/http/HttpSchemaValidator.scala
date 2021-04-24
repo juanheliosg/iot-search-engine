@@ -61,14 +61,16 @@ object HttpSchemaValidator extends SchemaValidator{
     schema.measures.foreach(measure => {
       if (json.keys.contains(measure.field)) {
         val measureNumber = (json \ measure.field).validate[String]
-        measureNumber.asEither match {
-          case Left(numb) =>
-            errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}"))
-          case Right(numb) =>
-            numb.toDoubleOption.getOrElse(
-              errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}")))
+        if (measureNumber != ""){
+          measureNumber.asEither match {
+            case Left(numb) =>
+              errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}"))
+            case Right(numb) =>
+              numb.toDoubleOption.getOrElse(
+                errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}")))
+            }
         }
-      } else {
+      }else {
         errors.addOne(ValidationError(s"Measure ${measure.name} not found in source"))
       }})
     errors
