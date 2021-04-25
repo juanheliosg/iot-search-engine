@@ -28,7 +28,7 @@ santanderCars = {
                 {"name": "carga",
                 "field": "ayto:carga",
                 "unit":"sin unidad",
-                "description":"Carga representa una estimación del grado de congestión en base a un algoritmo que usa como factores la intensidad y la ocupación"
+                "description":"Carga representa una estimación del grado de congestión en base a la intensidad y la ocupación"
                 }
                 ]
             },
@@ -44,17 +44,17 @@ santanderCars = {
             }
         },
         "metadata":{
-            "name": "santander-traffic"
-            "description": "Sensores sobre la intensidad del tráfico en la ciudad de Santander"
-            "tags": ["traffic","static","smartcity"]
+            "name": "santander-traffic",
+            "description": "Sensores sobre la intensidad del tráfico en la ciudad de Santander",
+            "tags": ["traffic","static","smartcity"],
             "sample":{
-                "freq": 1
-                "unit": "minute"
-            }
+                "freq": 1,
+                "unit": "minute",
+            },
             "localization":{
-                "name": "Santander"
-                "city": "Santander"
-                "region": "Cantabria"
+                "name": "Santander",
+                "city": "Santander",
+                "region": "Cantabria",
                 "country": "Spain"
             }
         }
@@ -94,19 +94,19 @@ sensorSmartMobile = {
                 "topic": kafkaTopic,
                 "server": kafkaServer 
             }
-        }
+        },
         "metadata":{
-            "name": "santander-environment"
-            "description": "Sensores ambientales móviles en la ciudad de Santander"
-            "tags": ["environment","mobile","smartcity","air quality"]
+            "name": "santander-environment",
+            "description": "Sensores ambientales móviles en la ciudad de Santander",
+            "tags": ["environment","mobile","smartcity","air quality"],
             "sample":{
-                "freq": 1
-                "unit": "minute"
-            }
+                "freq": 1,
+                "unit": "minute",
+            },
             "localization":{
-                "name": "Santander"
-                "city": "Santander"
-                "region": "Cantabria"
+                "name": "Santander",
+                "city": "Santander",
+                "region": "Cantabria",
                 "country": "Spain"
             }
         }
@@ -140,19 +140,19 @@ sensorSmartEnvMonitoring = {
                 "topic": kafkaTopic,
                 "server": kafkaServer
             }
-        }
+        },
         "metadata":{
-            "name": "santander-environment-"
-            "description": "Este rescurso proporciona información acerca de las mediciones en tiempo real de distintos sensores localizados en la ciudad de Santander relacionados con el ambiente, luz, ruido, temperatura..."
-            "tags": ["environment","mobile","smartcity","noise","light"]
+            "name": "santander-environment-",
+            "description": "Mediciones en tiempo real de distintos sensores localizados en la ciudad de Santander relacionados con el ambiente, luz, ruido, temperatura...",
+            "tags": ["environment","mobile","smartcity","noise","light"],
             "sample":{
-                "freq": 1
-                "unit": "minute"
-            }
+                "freq": 1,
+                "unit": "minute",
+            },
             "localization":{
-                "name": "Santander"
-                "city": "Santander"
-                "region": "Cantabria"
+                "name": "Santander",
+                "city": "Santander",
+                "region": "Cantabria",
                 "country": "Spain"
             }
         }
@@ -177,7 +177,7 @@ sensorContainers = {
             },
         "IOConfig":{
             "inputConfig": {
-                "address": "http://datos.santander.es/api/rest/datasets/sensores_smart_env_monitoring.json",
+                "address": "http://datos.santander.es/rest/datasets/residuos_contenedores.json",
                 "jsonPath": "$.resources",
                 "freq": 60000 #1 Minute
             },
@@ -185,19 +185,19 @@ sensorContainers = {
                 "topic": kafkaTopic,
                 "server": kafkaServer
             }
-        }
+        },
         "metadata":{
-            "name": "santander-waste-management"
-            "description": "Este recurso proporciona información sobre el estado de los contenedores de residuos"
-            "tags": ["waste","static","smartcity","containers"]
+            "name": "santander-waste-management",
+            "description": "Este recurso proporciona información sobre el estado de los contenedores de residuos",
+            "tags": ["waste","static","smartcity","containers"],
             "sample":{
-                "freq": 1
-                "unit": "minute"
-            }
+                "freq": 1,
+                "unit": "minute",
+            },
             "localization":{
-                "name": "Santander"
-                "city": "Santander"
-                "region": "Cantabria"
+                "name": "Santander",
+                "city": "Santander",
+                "region": "Cantabria",
                 "country": "Spain"
             }
         }
@@ -212,8 +212,8 @@ sensorNoise = {
                 {"name": "Noise",
                 "field": "LAeq",
                 "unit":"unknow",
-                "description":"Nivel sonoro continuo equivalente. Se define en la ISO 1996-2:2017 como el valor del nivel de presión en dBA en ponderación A de un sonido estable que en un intervalo de tiempo T posee la misma presión sonora cuadrática media que el sonido que se mide y cuyo nivel varía con el tiempo"
-                },
+                "description":"Nivel sonoro continuo equivalente. Se define en la ISO 1996-2:2017 como el valor del nivel de presión en dBA en ponderacion con el tiempo."
+                }]
             },
         "IOConfig":{
             "inputConfig": {
@@ -225,19 +225,19 @@ sensorNoise = {
                 "topic": kafkaTopic,
                 "server": kafkaServer
             }
-        }
+        },
         "metadata":{
-            "name": "valencia-ruzafa-noise"
-            "description": "Sensores de ruido del barrio de Ruzafa de valencia"
-            "tags": ["static","smartcity","noise"]
+            "name": "valencia-ruzafa-noise",
+            "description": "Sensores de ruido del barrio de Ruzafa de valencia",
+            "tags": ["static","smartcity","noise"],
             "sample":{
-                "freq": 1
-                "unit": "minute"
-            }
+                "freq": 1,
+                "unit": "minute",
+            },
             "localization":{
-                "name": "Barrio de Ruzafa"
-                "city": "Valencia"
-                "region": "Valencia"
+                "name": "Barrio de Ruzafa",
+                "city": "Valencia",
+                "region": "Valencia",
                 "country": "Spain"
             }
         }
@@ -245,8 +245,11 @@ sensorNoise = {
 
 
 sensors = [sensorSmartMobile,santanderCars,sensorSmartEnvMonitoring, sensorNoise, sensorContainers]
+
 for ext in sensors:
-    print("Status code: ", requests.post(extractor_url, json=ext))
+    response = requests.post(extractor_url, json=ext)   
+    print("Status code: ", response)
+    print(response.content)
 
 
 

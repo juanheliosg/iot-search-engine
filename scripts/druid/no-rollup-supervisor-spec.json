@@ -17,12 +17,13 @@
         {"type":  "string", "name":  "unit"},
         {"type":  "string", "name":  "sampling_unit"},
         {"type":  "string", "name":  "measure_desc"},
+        {"type":  "string", "name":  "measure_name"},
         {"type":  "string", "name":  "tags"},
         {"type":  "string", "name":  "description"},
         {"type": "string", "name": "sensorID"},
           {"type": "long", "name": "measureID" },
-          {"type": "string", "name": "sourceID" },
-          {"type": "string", "name": "name" } 
+          {"type": "string", "name": "sourceID" }
+
       ]
     },
     "metricsSpec": [

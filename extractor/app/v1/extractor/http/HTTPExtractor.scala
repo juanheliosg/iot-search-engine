@@ -82,7 +82,7 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
               "sourceID" -> new JsString(entityID),
               "measure" -> new JsNumber(strMeasure.toDouble),
               "measureID" -> new JsNumber(index),
-              "name" -> new JsString(measure.name),
+              "measure_name" -> new JsString(measure.name),
               "unit" -> new JsString(measure.unit),
               "measure_desc" -> new JsString(measure.description.getOrElse(""))
             ))
