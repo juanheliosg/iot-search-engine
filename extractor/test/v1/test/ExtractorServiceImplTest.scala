@@ -44,6 +44,8 @@ class ExtractorServiceImplTest extends PlaySpec
       Map("datastax-java-driver.basic.contact-points"
         -> List(s"localhost:$port"),
         "extractor.timeout-seconds" -> 50,
+        "extractor.max-sensor-per-extractor" -> 10000,
+        "extractor.sensor-to-check" -> 5,
         "datastax-java-driver.basic.load-balancing-policy.local-datacenter" -> "datacenter1",
         "akka.persistence.cassandra.journal.keyspace-autocreate" -> "on",
         "akka.persistence.cassandra.journal.tables-autocreate" -> "on",
@@ -109,7 +111,7 @@ class ExtractorServiceImplTest extends PlaySpec
 
       val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
-      val result = spyService.postExtractor(extInput)
+      val result = service.postExtractor(extInput)
       val response = contentAsJson(result)
       val respId = (response \ "id").as[String]
 

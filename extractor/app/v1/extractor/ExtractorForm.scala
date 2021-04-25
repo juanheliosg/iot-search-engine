@@ -1,6 +1,7 @@
 package v1.extractor
 
 
+import com.typesafe.config.ConfigFactory
 import play.api.data.FormError
 import play.api.data.validation.{Constraint, Invalid, ValidationResult}
 import play.api.libs.json._
@@ -37,7 +38,7 @@ object IOConfigForm{
  * Interface that all schema validators must implement
  */
 trait SchemaValidator{
-  def validate(extractor: ExtractorFormInput, maxNumSensor: Int ): ValidationResult
+  def validate(extractor: ExtractorFormInput, sensorsToCheck: Int,  maxNumSensor: Int ): ValidationResult
 }
 
 /**
@@ -65,6 +66,11 @@ object ExtractorForm{
     }
   }
 
+  val config = ConfigFactory.defaultApplication().resolve()
+  val sensorsToCheck = config.getInt("extractor.sensors-to-check")
+  val maxSensors =  config.getInt("extractor.max-sensor-per-extractor")
+
+
   /**
    * A form for extractors
    * @param extType type of the extractor
@@ -76,7 +82,10 @@ object ExtractorForm{
     extractorInput => {
       ExtractorType.withName(extractorInput.extType) match {
         case ExtractorType.Http =>
-          HttpSchemaValidator.validate(extractorInput,10000) //Numero mágico a sustituir por configuraicón
+          HttpSchemaValidator.validate(extractorInput,
+            sensorsToCheck
+            , maxSensors
+           ) //Numero mágico a sustituir por configuraicón
         case _ => Invalid("Invalid extractor type")
       }
 

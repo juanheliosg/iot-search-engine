@@ -158,9 +158,15 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
           logger.info(s"Success creating extractor with $extractorId id")
           newExtractor.ask(ref => ExtractorGuardianEntity.startExtractor(ref))
           Created(
-            Json.toJson(new ExtractorStatusResponse(
-              response.status.id, "starting"
-            ))
+            Json.toJson(
+              new ExtractorGetResponse(
+                extractorId,
+                response.status.status,
+                response.extractorState.extractorType.toString,
+                response.extractorState.schema,
+                response.extractorState.config,
+                response.extractorState.metadata
+              ))
           )
         })
         result
@@ -193,9 +199,14 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
         val result = reply.map( response => {
           logger.info(s"Success updating with $extractorId id")
           Ok(
-            Json.toJson(new ExtractorStatusResponse(
-              response.status.id, response.status.status
-            ))
+            Json.toJson(new ExtractorGetResponse(
+            extractorId,
+            response.status.status,
+            response.extractorState.extractorType.toString,
+            response.extractorState.schema,
+            response.extractorState.config,
+            response.extractorState.metadata
+          ))
           )
         })
         result

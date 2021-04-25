@@ -129,6 +129,7 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
 
     }
 
+
     "fail if provided schema cant match original one" in {
       val json = Json.obj(
         "type" -> "http",
@@ -352,8 +353,65 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
 
       status(result) mustBe 400
     }
+    "work for source with empty measures" in {
+      val listWithEmptyMeasures = "https://run.mocky.io/v3/cd86ab12-b66b-4122-9839-c2a41a408ae6"
+      val json = Json.obj(
+        "type" -> "http",
+        "dataSchema" -> Json.obj(
+          "sensorIDField" -> "dc:identifier",
+          "timestampField" -> "dc:modified",
+          "measures" -> Json.arr(
+            Json.obj(
+              "name"-> "noise",
+              "field" -> "ayto:noise",
+              "unit" -> "db"
+            ),
+            Json.obj(
+              "name"-> "temperature",
+              "field" -> "ayto:temperature",
+              "unit" -> "grades"
+            ),
+            Json.obj(
+              "name"-> "light",
+              "field" -> "ayto:light",
+              "unit" -> "?"
+            )
+          )
+        ),
+        "IOConfig" -> Json.obj(
+          "inputConfig" -> Json.obj(
+            "address" -> listWithEmptyMeasures,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          )),
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
+      )
+      val correctValidation = ExtractorForm.form.bind(json,100000).fold(
+        formWithErrors => {
+          false
+        },
+        extData => {
+          true
+        }
+      )
+      correctValidation mustBe true
+    }
 
     "work if everything is correct" in {
+
       val correctAdresses = Seq(
         Tuple2(addressJsonPath, "$.resources"),
         Tuple2(addressSingleSource,"$"),
