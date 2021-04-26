@@ -142,7 +142,7 @@ sensorSmartEnvMonitoring = {
             }
         },
         "metadata":{
-            "name": "santander-environment-",
+            "name": "santander-smart-env",
             "description": "Mediciones en tiempo real de distintos sensores localizados en la ciudad de Santander relacionados con el ambiente, luz, ruido, temperatura...",
             "tags": ["environment","mobile","smartcity","noise","light"],
             "sample":{
