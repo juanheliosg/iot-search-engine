@@ -1,13 +1,17 @@
 package v1.extractor
 
 
+import com.typesafe.config.ConfigFactory
 import play.api.data.FormError
 import play.api.data.validation.{Constraint, Invalid, ValidationResult}
 import play.api.libs.json._
 import v1.extractor.http.HttpSchemaValidator
+import v1.extractor.models.extractor.config.KafkaConfig
+import v1.extractor.models.extractor.{DataSchema, MeasureField}
+import v1.extractor.models.metadata.{Location, Metadata, Sample, TimeUnit}
 
-case class ExtractorFormInput(id: Long, extType: String,dataSchema: DataSchema,
-                              ioConfig: IOConfigForm)
+case class ExtractorFormInput(extType: String,dataSchema: DataSchema,
+                              ioConfig: IOConfigForm, metadata: Metadata)
 
 /**
  * Configuration form
@@ -34,7 +38,7 @@ object IOConfigForm{
  * Interface that all schema validators must implement
  */
 trait SchemaValidator{
-  def validate(extractor: ExtractorFormInput, maxNumSensor: Int ): ValidationResult
+  def validate(extractor: ExtractorFormInput, sensorsToCheck: Int,  maxNumSensor: Int ): ValidationResult
 }
 
 /**
@@ -62,6 +66,11 @@ object ExtractorForm{
     }
   }
 
+  val config = ConfigFactory.defaultApplication().resolve()
+  val sensorsToCheck = config.getInt("extractor.sensors-to-check")
+  val maxSensors =  config.getInt("extractor.max-sensor-per-extractor")
+
+
   /**
    * A form for extractors
    * @param extType type of the extractor
@@ -72,26 +81,32 @@ object ExtractorForm{
   val schemaMappingCheck: Constraint[ExtractorFormInput] = Constraint("constraints.schemacheck")({
     extractorInput => {
       ExtractorType.withName(extractorInput.extType) match {
-        case ExtractorType.Http => HttpSchemaValidator.validate(extractorInput,10000) //Numero mágico a sustituir por configuraicón
+        case ExtractorType.Http =>
+          HttpSchemaValidator.validate(extractorInput,
+            sensorsToCheck
+            , maxSensors
+           ) //Numero mágico a sustituir por configuraicón
         case _ => Invalid("Invalid extractor type")
       }
+
     }
   })
+  val maxSizeDescription = 256
+  val maxSizeName = 32
 
   val form = Form(
       mapping(
-        "id" -> longNumber(min=0),
         "type" -> nonEmptyText.verifying("Bad type",ExtractorType.isExtractorType(_)),
         "dataSchema" -> mapping(
-          "sourceID" -> longNumber(min=0),
           "sensorIDField" -> nonEmptyText,
           "timestampField" -> nonEmptyText,
           "measures" -> list(
             mapping(
-              "name" -> nonEmptyText,
+              "name" -> nonEmptyText(maxLength=maxSizeName),
               "field" -> nonEmptyText,
-              "measureID" -> longNumber(min=0)
-            )(Measure.apply)(Measure.unapply)
+              "unit" -> nonEmptyText,
+              "description" -> optional(text(maxLength=maxSizeDescription))
+            )(MeasureField.apply)(MeasureField.unapply)
           ).verifying("No measures", _.size > 0)
         )(DataSchema.apply)(DataSchema.unapply),
         "IOConfig" -> mapping(
@@ -105,6 +120,23 @@ object ExtractorForm{
             "server" -> nonEmptyText
           )(KafkaConfig.apply)(KafkaConfig.unapply)
         )(IOConfigForm.apply)(IOConfigForm.unapply)
+        ,"metadata" -> mapping(
+          "name" -> nonEmptyText(maxLength=maxSizeName),
+          "description" -> optional(text(maxLength=maxSizeDescription)),
+          "tags" -> seq(nonEmptyText),
+          "sample" -> mapping(
+            "freq" -> longNumber(min=1),
+            "unit" -> nonEmptyText.verifying(error="Time unit not valid", TimeUnit.isTimeUnit(_))
+          )(Sample.apply)(Sample.unapply),
+          "localization" -> mapping(
+            "name" -> nonEmptyText(maxLength=maxSizeName),
+            "address" -> optional(nonEmptyText),
+            "city" -> optional(nonEmptyText(maxLength=maxSizeName)),
+            "region" -> optional(nonEmptyText(maxLength=maxSizeName)),
+            "country" -> optional(nonEmptyText(maxLength=maxSizeName))
+          )(Location.apply)(Location.unapply),
+          "url" -> optional(text)
+        )(Metadata.apply)(Metadata.unapply)
       )(ExtractorFormInput.apply) (ExtractorFormInput.unapply).verifying(schemaMappingCheck)
     )
 }

@@ -7,7 +7,7 @@ import akka.pattern.StatusReply
 import akka.persistence.typed.{PersistenceId, RecoveryCompleted}
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, RetentionCriteria}
 import akka.util.Timeout
-import v1.extractor.ExtractorState
+import v1.extractor.models.extractor.ExtractorState
 
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
@@ -127,7 +127,8 @@ object ExtractorGuardianEntity{
   }
 
 
-  private def startExtractorChild(extData: ExtractorState,
+  private def startExtractorChild(entityId: String,
+                                   extData: ExtractorState,
                                   context: ActorContext[Command],
                                   playActorConfig: PlayActorConfig): Unit = {
 
@@ -144,7 +145,7 @@ object ExtractorGuardianEntity{
     }
     else{
       context.log.info(s"Starting child for ${context.self.path} actor")
-      val child = context.spawn(Extractor(extData, context.self, playActorConfig),"extractor")
+      val child = context.spawn(Extractor(entityId, extData, context.self, playActorConfig),"extractor")
       context.watchWith(child, failureOnExtractor)
     }
   }
@@ -154,7 +155,7 @@ object ExtractorGuardianEntity{
                                             context: ActorContext[Command],playActorConfig: PlayActorConfig ) = {
 
     Effect.persist(extractorUpdated(extData))
-      .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(extData, context, playActorConfig))
+      .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(entityID,extData, context, playActorConfig))
       .thenReply(replyTo)(_ => StatusReply.Success(Summary(extData,Status(entityID, state))))
 
   }
@@ -179,7 +180,7 @@ object ExtractorGuardianEntity{
         case startExtractor(replyTo) =>
           if (extractorState.nonEmpty){
             Effect.persist(ExtractorBeganStarting)
-              .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(extractorState.get, context, playActorConfig))
+              .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(entityID,extractorState.get, context, playActorConfig))
               .thenReply(replyTo)(_ => StatusReply.Ack)
           }
           else{
@@ -300,10 +301,10 @@ object ExtractorGuardianEntity{
           updateExtractorEffect(extData, replyTo, entityID, state)
         case startExtractor(replyTo) =>
           Effect.persist(ExtractorBeganStarting)
-            .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(extractorState, context, playActorConfig))
+            .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(entityID,extractorState, context, playActorConfig))
             .thenReply(replyTo)(_ => StatusReply.Ack)
         case `KilledChildStartNewOne` =>
-          Effect.persist(ExtractorBeganStarting).thenRun( (state: ExtractorGuardian) => startExtractorChild(extractorState,context, playActorConfig)).thenNoReply()
+          Effect.persist(ExtractorBeganStarting).thenRun( (state: ExtractorGuardian) => startExtractorChild(entityID,extractorState,context, playActorConfig)).thenNoReply()
         case getExtractor(replyTo) => Effect.reply(replyTo)(StatusReply.Success(
           Summary(extractorState,Status(entityID, state))))
         case getStatus(replyTo) => Effect.reply(replyTo)(StatusReply.Success(Status(entityID, state)))
@@ -337,7 +338,7 @@ object ExtractorGuardianEntity{
           Summary(extractorState,Status(entityID,state))))
         case startExtractor(replyTo) =>
           Effect.persist(ExtractorBeganStarting)
-            .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(extractorState, context, playActorConfig))
+            .thenRun( (newState :ExtractorGuardian) =>  startExtractorChild(entityID,extractorState, context, playActorConfig))
             .thenReply(replyTo)(_ => StatusReply.Ack)
         case getStatus(replyTo) => Effect.reply(replyTo)(StatusReply.Success(Status(entityID,state)))
         case _ => Effect.unhandled.thenNoReply()
@@ -392,13 +393,13 @@ object ExtractorGuardianEntity{
               state match {
                 case extractor: RunningExtractor =>
                   val runState = extractor.extractorState
-                  startExtractorChild(runState, context, playActorConfig)
+                  startExtractorChild(entityID,runState, context, playActorConfig)
                 case _ =>
               }
               state match {
                 case extractor: StartingExtractor =>
                   val runState = extractor.extractorState
-                  startExtractorChild(runState, context, playActorConfig)
+                  startExtractorChild(entityID,runState, context, playActorConfig)
                 case _ =>
               }
           }

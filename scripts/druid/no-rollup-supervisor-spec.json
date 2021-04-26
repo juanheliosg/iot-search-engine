@@ -9,10 +9,21 @@
     "dimensionsSpec": {
       "dimensions": [
           {"type": "string", "name": "seriesID" },
+        {"type":  "string", "name":  "city"},
+        {"type":  "string", "name":  "region"},
+        {"type":  "string", "name":  "country"},
+        {"type":  "string", "name":  "address"},
+        {"type":  "string", "name":  "name"},
+        {"type":  "string", "name":  "unit"},
+        {"type":  "string", "name":  "sampling_unit"},
+        {"type":  "string", "name":  "measure_desc"},
+        {"type":  "string", "name":  "measure_name"},
+        {"type":  "string", "name":  "tags"},
+        {"type":  "string", "name":  "description"},
         {"type": "string", "name": "sensorID"},
           {"type": "long", "name": "measureID" },
-          {"type": "long", "name": "sourceID" },
-          {"type": "string", "name": "name" } 
+          {"type": "string", "name": "sourceID" }
+
       ]
     },
     "metricsSpec": [

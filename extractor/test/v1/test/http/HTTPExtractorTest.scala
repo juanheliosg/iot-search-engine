@@ -2,16 +2,15 @@ package v1.test.http
 
 import org.scalatest.wordspec.AnyWordSpec
 import v1.extractor.http.HTTPExtractor
-import v1.extractor.{DataSchema, Measure}
+import v1.extractor.models.extractor.DataSchema
+import v1.extractor.models.extractor.{DataSchema, MeasureField}
 
 class HTTPExtractorTest extends AnyWordSpec {
 
 
-  private val schema = new DataSchema(
-    1, "ayto:idSensor", "dc:modified",
-    List(new Measure("ocupation","ayto:ocupacion",2),
-      new Measure("intensity", "ayto:intensidad",1))
-  )
+  private val schema = new DataSchema("ayto:idSensor", "dc:modified", List(new MeasureField("ocupation","ayto:ocupacion","veh/h",Some("Vehículos por hora sobre una espiga")),
+    new MeasureField("intensity", "ayto:intensidad","%",None)))
+
   "JSON parse " must {
     "pass nil object if empty measures are given" in {
       val rawSensorData =
@@ -27,7 +26,7 @@ class HTTPExtractorTest extends AnyWordSpec {
           |      }
           |""".stripMargin
 
-      val result = HTTPExtractor.parseJSON(rawSensorData,schema)
+      val result = HTTPExtractor.parseJSON("2",rawSensorData,schema)
       assert(result == Nil)
     }
     "pass just one measure if others empty" in {
@@ -44,10 +43,11 @@ class HTTPExtractorTest extends AnyWordSpec {
           |      }
           |""".stripMargin
 
-      val result = HTTPExtractor.parseJSON(rawSensorData,schema)
+      val result = HTTPExtractor.parseJSON("1",rawSensorData,schema)
+      println(result(0).toString())
 
-      val expectedResult = "{\"measure\":420.0,\"timestamp\":\"2021-03-23T12:04:00Z\",\"measureID\":2,\"sensorID\":\"1001\",\"seriesID\":\"121001\",\"name\":\"ocupation\",\"sourceID\":1}"
-      assert(result(0).toString() == expectedResult)
+      val expectedResult = "{\"measure\":420.0,\"sourceID\":\"1\",\"timestamp\":\"2021-03-23T12:04:00Z\",\"measure_desc\":\"Vehículos por hora sobre una espiga\",\"measureID\":0,\"measure_name\":\"ocupation\",\"sensorID\":\"1001\",\"unit\":\"veh/h\",\"seriesID\":\"101001\"}"
+        assert(result(0).toString() == expectedResult)
     }
 
   }

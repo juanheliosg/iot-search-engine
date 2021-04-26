@@ -9,7 +9,8 @@ import akka.stream.KillSwitch
 import play.api.Configuration
 import v1.extractor.actors.ExtractorGuardianEntity.extractorIsRunning
 import v1.extractor.http.HTTPExtractor
-import v1.extractor.{ExtractorState, ExtractorType}
+import v1.extractor.ExtractorType
+import v1.extractor.models.extractor.ExtractorState
 
 import java.time.LocalDateTime
 
@@ -32,8 +33,8 @@ object Extractor{
    */
   final case object StreamRunning extends Command
 
-  def apply(extData: ExtractorState, parent: ActorRef[ExtractorGuardianEntity.Command], playActorConfig: PlayActorConfig): Behavior[Command] =
-    Behaviors.setup(context => new Extractor(context,parent, extData, playActorConfig))
+  def apply(entityID: String, extData: ExtractorState, parent: ActorRef[ExtractorGuardianEntity.Command], playActorConfig: PlayActorConfig): Behavior[Command] =
+    Behaviors.setup(context => new Extractor(entityID: String , context,parent, extData, playActorConfig))
 }
 
 /**
@@ -49,12 +50,12 @@ class PlayActorConfig (val actorSystem: ActorSystem, val config: Configuration)
  * @param extData data for the akka operation
  * @param playActorConfig generic configuration for the stream
  */
-class Extractor (context: ActorContext[Extractor.Command], parent: ActorRef[ExtractorGuardianEntity.Command], extData: ExtractorState, playActorConfig: PlayActorConfig)
+class Extractor (entityID: String, context: ActorContext[Extractor.Command], parent: ActorRef[ExtractorGuardianEntity.Command], extData: ExtractorState, playActorConfig: PlayActorConfig)
   extends AbstractBehavior[Extractor.Command] (context){
   import Extractor._
 
   val killSwitch: KillSwitch = extData.extractorType match{
-    case  ExtractorType.Http => HTTPExtractor.extraction(extData, context.self, playActorConfig)
+    case  ExtractorType.Http => HTTPExtractor.extraction(entityID, extData, context.self, playActorConfig)
     case _ => throw new IllegalStateException()
   }
 

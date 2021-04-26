@@ -34,6 +34,7 @@ lazy val extractor = (project in file("extractor"))
     libraryDependencies ++= extractorDeps,
 ).settings(extractorDockerSettings)
 
+
 testOptions += Setup( cl =>
   cl.loadClass("org.slf4j.LoggerFactory").
     getMethod("getLogger",cl.loadClass("java.lang.String")).

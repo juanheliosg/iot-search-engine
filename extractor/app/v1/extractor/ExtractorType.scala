@@ -2,15 +2,13 @@ package v1.extractor
 
 /**
  * Enum for the different type of extractors avalaible in the system
- * Current avalaible extractors are:
+ * Current available extractors are:
  *
  * http -> Uses http protocol to extract data in JSON format from an endpoint
- * rw_sym -> Simulate a random walk process
  */
 object ExtractorType extends Enumeration {
   type ExtractorType = Value
   val Http = Value("http")
-  val RANDOM_WALK_SYM = Value("rw_sym")
 
   /**
    * Check if string is inside the enum

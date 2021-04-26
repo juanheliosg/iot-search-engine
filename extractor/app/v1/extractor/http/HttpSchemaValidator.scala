@@ -5,23 +5,19 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, IllegalUriException}
-import akka.kafka.ProducerSettings
-import org.apache.kafka.common.serialization.{StringSerializer}
 import akka.stream.alpakka.json.scaladsl.JsonReader
 import akka.stream.scaladsl._
 import akka.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
-import org.jsfr.json.exception.JsonSurfingException
 import play.api.data.validation.{Invalid, Valid, ValidationError, ValidationResult}
 import play.api.libs.json.{JsObject, Json}
 import v1.extractor.{ExtractorFormInput, SchemaValidator}
 
 import java.time.format.DateTimeFormatter
-import java.util.NoSuchElementException
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future} //Para experimentación
+import scala.concurrent.{Await, Future}
 
 /**
  * Object containing functions for validating Http schema inputs
@@ -61,14 +57,18 @@ object HttpSchemaValidator extends SchemaValidator{
     schema.measures.foreach(measure => {
       if (json.keys.contains(measure.field)) {
         val measureNumber = (json \ measure.field).validate[String]
-        measureNumber.asEither match {
-          case Left(numb) =>
-            errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}"))
-          case Right(numb) =>
-            numb.toDoubleOption.getOrElse(
-              errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}")))
+        if (! measureNumber.contains("")){
+          measureNumber.asEither match {
+            case Left(numb) =>
+              errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}"))
+            case Right(numb) =>
+              val isNotDouble = numb.toDoubleOption.isEmpty
+              if (isNotDouble)
+                errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}"))
+
+            }
         }
-      } else {
+      }else {
         errors.addOne(ValidationError(s"Measure ${measure.name} not found in source"))
       }})
     errors
@@ -89,7 +89,7 @@ object HttpSchemaValidator extends SchemaValidator{
    * @param maxNumSensor config setting
    * @return
    */
-  def validate(extractor: ExtractorFormInput, maxNumSensor: Int): ValidationResult = {
+  def validate(extractor: ExtractorFormInput, sensorsToCheck: Int, maxNumSensor: Int): ValidationResult = {
 
     val inputConfig = extractor.ioConfig.inputConfig
     val errors: mutable.Set[ValidationError] = collection.mutable.Set()
@@ -111,7 +111,7 @@ object HttpSchemaValidator extends SchemaValidator{
             .flatMapConcat(extractEntityData)
             .via(JsonReader.select(inputConfig.jsonPath.get))
             .via(JsonFraming.objectScanner(maxNumSensor))
-            .take(1) //Se asume que todos son iguales
+            .take(sensorsToCheck)
             .map(_.utf8String)
             .map(rawJson => checkSchema(rawJson, extractor))
             .recover{
