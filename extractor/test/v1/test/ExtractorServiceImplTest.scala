@@ -1,6 +1,7 @@
 package v1.test
 
 
+import akka.persistence.cassandra.cleanup.Cleanup
 import akka.util.Timeout
 import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
@@ -73,7 +74,6 @@ class ExtractorServiceImplTest extends PlaySpec
 
 
 
-
   "getExtractor" must{
     "return correct result if previous extractor has been posted" in {
       val extInput = ExtractorFormInput( ExtractorType.Http.toString,schema, config, metadata)
@@ -109,22 +109,32 @@ class ExtractorServiceImplTest extends PlaySpec
   "postExtractor" must {
     "fail if several collisions are repeated" in {
       val spyService = spy(service)
+      val inputConfig2: InputConfigForm = InputConfigForm("fakeaddress", Some("$"), Some(freq))
+      val config: IOConfigForm = IOConfigForm(inputConfig2, kafkaConfig)
 
-      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+      val extInput2 = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
-      val result = service.postExtractor(extInput)
+      val result = service.postExtractor(extInput2)
       val response = contentAsJson(result)
       val respId = (response \ "id").as[String]
 
       when(spyService.generateUniqueId()).thenReturn(respId)
       status(result) mustBe 201 //Created code
 
-      val resultRepeated = spyService.postExtractor(extInput)
+      val inputConfig3: InputConfigForm = InputConfigForm("fakead13d2ress", Some("$"), Some(freq))
+      val config3: IOConfigForm = IOConfigForm(inputConfig3, kafkaConfig)
+
+      val extInput3 = ExtractorFormInput(ExtractorType.Http.toString,schema, config3, metadata)
+
+      val resultRepeated = spyService.postExtractor(extInput3)
+
       status(resultRepeated) mustBe 500
     }
   }
   "putExtractor" must{
     "fail if wrong extractor id" in{
+      val inputConfig: InputConfigForm = InputConfigForm("fakeadd2ress", Some("$"), Some(freq))
+      val config: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
       val extInputPut = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
 
       val result = service.updateExtractor("2",extInputPut)
@@ -140,7 +150,9 @@ class ExtractorServiceImplTest extends PlaySpec
     "update extractor if everything ok" in {
       val newIdField = "Ayto:newfield"
 
-      val extInputPost = ExtractorFormInput(ExtractorType.Http.toString,this.schema, config, metadata)
+      val inputConfig: InputConfigForm = InputConfigForm("fakead13d2r2ess", Some("$"), Some(freq))
+      val config1: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
+      val extInputPost = ExtractorFormInput(ExtractorType.Http.toString,this.schema, config1, metadata)
 
       val resultPost = service.postExtractor(extInputPost)
       val response = contentAsJson(resultPost)
@@ -148,7 +160,7 @@ class ExtractorServiceImplTest extends PlaySpec
 
       val schema = new DataSchema(newIdField, "dc:modified", List(new MeasureField("ocupation","ayto:ocupacion","veh/h",Some("Vehículos por hora sobre una espiga")),
         new MeasureField("intensity", "ayto:intensidad","%",None)))
-      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config1, metadata)
 
       val result = service.updateExtractor(respId,extInput)
       status(result) mustBe 200
@@ -166,6 +178,9 @@ class ExtractorServiceImplTest extends PlaySpec
   }
   "deleteExtractor" must {
     "delete an extractor if everything correct" in {
+      val inputConfig: InputConfigForm = InputConfigForm("fakead13d2redeletess", Some("$"), Some(freq))
+      val config: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
+
       val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
       val resultPost = service.postExtractor(extInput)
 
@@ -180,7 +195,10 @@ class ExtractorServiceImplTest extends PlaySpec
   "startExtractor" must {
     "fail if extractor is not stopped" in{
       val id = 222
-      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+      val inputConfig: InputConfigForm = InputConfigForm("fakead13d2r2ess111", Some("$"), Some(freq))
+      val config1: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
+
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config1, metadata)
 
       val resultPost = service.postExtractor(extInput)
       status(resultPost) mustBe 201
@@ -201,7 +219,10 @@ class ExtractorServiceImplTest extends PlaySpec
 
     }
     "startExtractor if everything correct" in {
-      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+      val inputConfig: InputConfigForm = InputConfigForm("fake113d2r2ess", Some("$"), Some(freq))
+      val config1: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
+
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config1, metadata)
 
       val resultPost = service.postExtractor(extInput)
       val response = contentAsJson(resultPost)
@@ -221,8 +242,9 @@ class ExtractorServiceImplTest extends PlaySpec
 
     }
   }
-  "stopExtractor" must{
-    "fail if extractor is not running or starting" in{
+
+  "stopExtractor" must {
+    "fail if extractor is not running or starting" in {
       val id = "2223"
 
       val resultStop = service.stopExtractor(id)
@@ -235,8 +257,11 @@ class ExtractorServiceImplTest extends PlaySpec
       status(resultStop) mustBe 400
       contentAsJson(resultStop) mustBe expectedResponse
     }
-    "stopExtractor if everything correct" in{
-      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+    "stopExtractor if everything correct" in {
+      val inputConfig: InputConfigForm = InputConfigForm("fakead13d122123r2ess", Some("$"), Some(freq))
+      val config1: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
+
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString, schema, config1, metadata)
 
       val resultPost = service.postExtractor(extInput)
       status(resultPost) mustBe 201
@@ -252,8 +277,13 @@ class ExtractorServiceImplTest extends PlaySpec
       status(resultStop) mustBe 200
       contentAsJson(resultStop) mustBe expectedResponse
     }
+  }
     "getAllExtractors if everything correct" in {
-      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+
+
+      val inputConfig: InputConfigForm = InputConfigForm("fakead13d2r2essssssss", Some("$"), Some(freq))
+      val config1: IOConfigForm = IOConfigForm(inputConfig, kafkaConfig)
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config1, metadata)
       val resp = service.postExtractor(extInput)
       status(resp) mustBe 201
 
@@ -274,11 +304,9 @@ class ExtractorServiceImplTest extends PlaySpec
       status(resp3) mustBe 201
 
       val result = service.getAllExtractors(100)
-      println(contentAsString(result))
       status(result) mustBe 200
-      (contentAsJson(result) \ "items").as[Int] mustBe 3
 
+      assert((contentAsJson(result) \ "items").as[Int] >= 3) //Single test contains 3 extractors full test 10
     }
-  }
 
 }

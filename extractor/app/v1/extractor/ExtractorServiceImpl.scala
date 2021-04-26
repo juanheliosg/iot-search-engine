@@ -20,7 +20,8 @@ import v1.extractor.models.extractor.{ExtractorGetResponse, ExtractorState, Extr
 
 import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Random, Success}
 
 
@@ -34,8 +35,10 @@ import scala.util.{Failure, Random, Success}
 @Singleton
 class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding: ClusterSharding, val config: Configuration
                                       , val actorSystem: ActorSystem, implicit val mat: Materializer ) extends AbstractController(cc){
+
+  val duration = java.time.Duration.ofSeconds(config.get[Long]("extractor.timeout-seconds"))
   implicit private val timeout: Timeout =
-    Timeout.create(java.time.Duration.ofSeconds(config.get[Long]("extractor.timeout-seconds")))
+    Timeout.create(duration)
     //Timeout.create(actorSystem.settings.config.getDuration("extractor.timeout"))
   implicit private val executionContext: ExecutionContext = cc.executionContext
 
@@ -150,12 +153,21 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
    */
   def postExtractor(extData: ExtractorFormInput): Future[Result] = {
 
+    val isNotUnique = checkIfUrlUnique(extData.ioConfig.inputConfig.address)
+    if (isNotUnique){
+      return Future(BadRequest(JSONError.format(
+        Json.obj(
+          "ioconfig.inputConfig.address" -> "Other extractor exists with the same URL"
+        ))
+      ))
+    }
+
     val extractorId = generateUniqueId()
     val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey,extractorId)
     val reply = entityRef.askWithStatus(ref => ExtractorGuardianEntity.getStatus(ref))
 
     val result = reply.flatMap(status =>
-      if(status.status != "not started"){ //change to enum
+      if (status.status != "not started"){ //change to enum
         logger.info(s"ID collision with id $extractorId ")
         numOfRepeatedPost += 1
         if (numOfRepeatedPost > collisionThreshold){
@@ -208,6 +220,16 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
    * @return
    */
   def updateExtractor(id: String, extData: ExtractorFormInput) : Future[Result] = {
+
+    val isNotUnique = checkIfUrlUnique(extData.ioConfig.inputConfig.address, exclusionId = Some(id))
+    if (isNotUnique){
+      return Future(BadRequest(JSONError.format(
+        Json.obj(
+          "ioconfig.inputConfig.address" -> "Other extractor exists with the same URL"
+        ))
+      ))
+    }
+
     val extractorId = id
     val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId)
     val reply = entityRef.askWithStatus(ref => ExtractorGuardianEntity.getStatus(ref))
@@ -381,7 +403,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
 
   /**
    * Returns the entityID ref part of the persistenceID
-   * @param persistenceID
+   * @param persistenceID id to retrieve
    * @return entityID
    */
   private def getEntityId(persistenceID: String) = {
@@ -404,7 +426,6 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
           "state" -> summary.status.status
         ))
       case Failure(StatusReply.ErrorMessage(_)) =>
-
         Future(JSONError.format(
           Json.obj(
             "id" -> s"Couldnt get $entityID extractor"
@@ -436,6 +457,53 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
         "extractors" -> extList.map(el => el)
         ))
     ))
+
+  }
+
+  /**
+   * Check if the given url is the same as other entity id url
+   * @param url ulr to check
+   * @param entityID entity id to retrieve url
+   * @return
+   */
+  private def isUrlTheSame(url: String, entityID: String): Future[Boolean] = {
+    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, entityID)
+
+    val reply: Future[ExtractorGuardianEntity.Summary] =
+      entityRef.askWithStatus(ref => ExtractorGuardianEntity.getExtractor(ref))
+
+    reply.flatMap (response => {
+      Future(response.extractorState.config.inputConfig.address == url)
+      }
+    )
+  }
+
+  /**
+   * Check if the given url is unique in the system.
+   * THis operation requires scanning all the persistence Ids in the system.
+   * There is no index o table avalaible to this in a more efficient way
+   * @param url url to check
+   * @param exclusionId id to be excluded from search. Can be used checking update operations
+   * @return
+   */
+  private def checkIfUrlUnique(url: String, exclusionId: Option[String] = None): Boolean = {
+
+    val extractors: Future[Seq[Boolean]] = query
+      .currentPersistenceIds()
+      .filter( id => {
+        val isExtractor = id.contains(ExtractorGuardianEntity.TypeKey.name) && ! id.contains("sharding")
+        if (exclusionId.nonEmpty)
+          isExtractor && getEntityId(id) != exclusionId.get
+        else isExtractor
+      }
+      )
+      .map(getEntityId)
+      .mapAsync(1)(isUrlTheSame(url,_))
+      .runWith(Sink.seq)
+
+    val result = Await.result(extractors, 10.seconds)
+
+    result.contains(true)
 
   }
 
