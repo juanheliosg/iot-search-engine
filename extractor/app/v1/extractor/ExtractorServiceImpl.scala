@@ -4,11 +4,15 @@ import akka.actor.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
 import akka.pattern.StatusReply
 import akka.persistence.cassandra.cleanup.Cleanup
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.persistence.query.PersistenceQuery
 import akka.persistence.typed.PersistenceId
+import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.util.Timeout
 import org.slf4j.LoggerFactory
 import play.api.Configuration
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.{AbstractController, ControllerComponents, Result}
 import v1.extractor.actors.{ExtractorGuardianEntity, PlayActorConfig}
 import v1.extractor.models.extractor.config.{HttpInputConfig, InputConfig}
@@ -21,7 +25,7 @@ import scala.util.{Failure, Random, Success}
 
 
 /**
- * Implements extractors logic and communicate with Akka actors
+ * Implements extractors logic and communication with Akka actors
  * @param cc controller components
  * @param sharding Cluster Sharding
  * @param config Play! Configuration
@@ -29,11 +33,14 @@ import scala.util.{Failure, Random, Success}
  */
 @Singleton
 class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding: ClusterSharding, val config: Configuration
-                                      , val actorSystem: ActorSystem ) extends AbstractController(cc){
+                                      , val actorSystem: ActorSystem, implicit val mat: Materializer ) extends AbstractController(cc){
   implicit private val timeout: Timeout =
     Timeout.create(java.time.Duration.ofSeconds(config.get[Long]("extractor.timeout-seconds")))
     //Timeout.create(actorSystem.settings.config.getDuration("extractor.timeout"))
   implicit private val executionContext: ExecutionContext = cc.executionContext
+
+  val query: CassandraReadJournal =
+    PersistenceQuery(actorSystem).readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
 
   private val logger = LoggerFactory.getLogger(getClass)
   private val playActorConfig = new PlayActorConfig(actorSystem, config)
@@ -86,6 +93,26 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
   }
 
   /**
+   * Generic Ok response for getting or updating an extractor
+   * @param extractorID id
+   * @param status status
+   * @param state extractor internal state
+   * @return
+   */
+  private def returnFullExtractor(extractorID: String, status: String, state: ExtractorState) = {
+    Ok(
+      Json.toJson(
+        new ExtractorGetResponse(
+          extractorID,
+          status,
+          state.extractorType.toString,
+          state.schema,
+          state.config,
+          state.metadata
+        )))
+  }
+
+  /**
    * Get an extractor data using a correct entity id
    * @param id entity id
    * @return extractorGetResponse object containing id, status, type, schema and config
@@ -97,16 +124,9 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
     val reply: Future[ExtractorGuardianEntity.Summary] =
       entityRef.askWithStatus(ref => ExtractorGuardianEntity.getExtractor(ref))
     reply.transformWith{
-      case Success(summary) => Future(Ok(
-        Json.toJson(
-        new ExtractorGetResponse(
-          extractorId,
-          summary.status.status,
-          summary.extractorState.extractorType.toString,
-          summary.extractorState.schema,
-          summary.extractorState.config,
-          summary.extractorState.metadata
-        ))))
+      case Success(summary) => Future(
+        returnFullExtractor(extractorId,summary.status.status,summary.extractorState))
+
       case Failure(StatusReply.ErrorMessage(_)) =>
         //We dont delete the created actor because a post method would be valid
         //i haven't see any examples of deleting the entity if getId is not valid
@@ -136,7 +156,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
 
     val result = reply.flatMap(status =>
       if(status.status != "not started"){ //change to enum
-        logger.info(s"ID collision with id ${extractorId} ")
+        logger.info(s"ID collision with id $extractorId ")
         numOfRepeatedPost += 1
         if (numOfRepeatedPost > collisionThreshold){
           Future(InternalServerError(JSONError.format(
@@ -151,7 +171,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
       }
       else{
         numOfRepeatedPost = 0
-        val newExtractor = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId.toString)
+        val newExtractor = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, extractorId)
         val extState = formToState(extData)
         val reply = newExtractor.askWithStatus(ref => ExtractorGuardianEntity.updateExtractor(extState,ref))
         val result = reply.map( response => {
@@ -183,8 +203,8 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
   /**
    * Update the extractor identified by the id and restart it.
    * Extractor identified by id must have been started
-   * @param id
-   * @param extData
+   * @param id id to extract
+   * @param extData extData for updating the actor
    * @return
    */
   def updateExtractor(id: String, extData: ExtractorFormInput) : Future[Result] = {
@@ -212,7 +232,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
         result
       }
       else{
-        logger.info(s"Request tried to update extractor with id ${id} but extractor has not been posted")
+        logger.info(s"Request tried to update extractor with id $id but extractor has not been posted")
         Future(BadRequest(JSONError.format(
           Json.obj(
             "id" -> "Extractor with provided id does not exists"
@@ -240,7 +260,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
 
 
     val cleanup = new Cleanup(actorSystem)
-    val persistenceId: String = PersistenceId(ExtractorGuardianEntity.TypeKey.name, id.toString).toString()
+    val persistenceId: String = PersistenceId(ExtractorGuardianEntity.TypeKey.name, id).toString()
 
     val result: Future[Result] = cleanup.deleteAll(persistenceId, neverUsePersistenceIdAgain = false).transformWith{
       case Success(_) =>
@@ -358,6 +378,67 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
     }
     finalResult
   }
+
+  /**
+   * Returns the entityID ref part of the persistenceID
+   * @param persistenceID
+   * @return entityID
+   */
+  private def getEntityId(persistenceID: String) = {
+    val typeLenght = ExtractorGuardianEntity.TypeKey.name.length
+    val sizePersistenceId = typeLenght + 1
+    persistenceID.substring(sizePersistenceId)
+  }
+
+  private def getNameStatus(entityID: String): Future[JsObject] = {
+    val entityRef = sharding.entityRefFor(ExtractorGuardianEntity.TypeKey, entityID)
+
+    val reply: Future[ExtractorGuardianEntity.Summary] =
+      entityRef.askWithStatus(ref => ExtractorGuardianEntity.getExtractor(ref))
+
+    reply.transformWith({
+      case Success(summary) =>
+        Future(Json.obj(
+          "id" -> entityID,
+          "name" -> summary.extractorState.metadata.name,
+          "state" -> summary.status.status
+        ))
+      case Failure(StatusReply.ErrorMessage(_)) =>
+
+        Future(JSONError.format(
+          Json.obj(
+            "id" -> s"Couldnt get $entityID extractor"
+          ))
+        )
+    })
+  }
+
+  /**
+   * Get numToExtract extractors. Order is not guaranteed.
+   * @param numToExtract Number of extractors to retry
+   * @return
+   */
+  def getAllExtractors(numToExtract: Long): Future[Result] = {
+
+    val extractors: Future[Seq[JsObject]] = query
+      .currentPersistenceIds()
+      .filter( id =>
+        id.contains(ExtractorGuardianEntity.TypeKey.name) && ! id.contains("sharding")
+      )
+      .take(numToExtract)
+      .map(getEntityId)
+      .mapAsync(1)(getNameStatus)
+      .runWith(Sink.seq)
+
+    extractors.flatMap(extList =>
+      Future(Ok(Json.obj(
+        "items" -> extList.size,
+        "extractors" -> extList.map(el => el)
+        ))
+    ))
+
+  }
+
 
 }
 

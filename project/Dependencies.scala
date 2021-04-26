@@ -9,11 +9,15 @@ object Dependencies{
    val AkkaVersion = "2.6.13"
    val alpakkaJSON = "com.lightbend.akka" %% "akka-stream-alpakka-json-streaming" % "2.0.2"
    val akka = "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion
-   val akkaPersistence = "com.typesafe.akka" %% "akka-persistence-typed" % AkkaVersion
+
    val akkaSharding = "com.typesafe.akka" %% "akka-cluster-sharding-typed" % AkkaVersion
    val akkaStreams = "com.typesafe.akka" %% "akka-stream-typed" % AkkaVersion
    val akkaSerialization = "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion
    val akkaKafka = "com.typesafe.akka" %% "akka-stream-kafka" % "2.0.7";
+
+   val cassandraAkka = "com.typesafe.akka" %% "akka-persistence-cassandra" % "1.0.5"
+   val akkaPersistence = "com.typesafe.akka" %% "akka-persistence-typed" % AkkaVersion
+   val akkaQuery = "com.typesafe.akka" %% "akka-persistence-query" % AkkaVersion
 
    val akkaPersistanceTest = "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
    val akkaTestKit = "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test
@@ -25,7 +29,7 @@ object Dependencies{
    val kafkaClient = "org.apache.kafka" % "kafka-clients" % "2.4.0"
    val kafkaTestContainers = "org.testcontainers" % "kafka" % testContainerVersion
    val cassandraTestContainer = "org.testcontainers" % "cassandra" % testContainerVersion
-   val cassandraAkka = "com.typesafe.akka" %% "akka-persistence-cassandra" % "1.0.5"
+
 
    val levelDB = "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
 
@@ -36,7 +40,7 @@ object Dependencies{
 
    val commonDeps = Seq(scalaTest % Test, mockitoScala % Test, scalastic, logs, guice)
    val extractorDeps = Seq(playScalaTest % Test, ws,
-      akkaPersistanceTest, akkaTestKit,
+      akkaPersistanceTest, akkaTestKit, akkaQuery,
       akka, akkaPersistence, akkaSharding,clusterSharding, cassandraAkka,
       akkaKafka, akkaStreams, alpakkaJSON, akkaSerialization, sprayJson,
       kafkaClient, kafkaTestContainers % Test, cassandraTestContainer % Test)

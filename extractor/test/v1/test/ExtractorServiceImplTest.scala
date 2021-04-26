@@ -10,8 +10,9 @@ import org.testcontainers.containers.{CassandraContainer, KafkaContainer}
 import org.testcontainers.utility.DockerImageName
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.Helpers.{contentAsJson, contentAsString, status}
+import spray.json.JsArray
 import v1.extractor._
 import v1.extractor.models.extractor.config.{HttpInputConfig, InputConfig, KafkaConfig}
 import v1.extractor.models.extractor.{DataSchema, ExtractorGetResponse, MeasureField}
@@ -250,6 +251,33 @@ class ExtractorServiceImplTest extends PlaySpec
       )
       status(resultStop) mustBe 200
       contentAsJson(resultStop) mustBe expectedResponse
+    }
+    "getAllExtractors if everything correct" in {
+      val extInput = ExtractorFormInput(ExtractorType.Http.toString,schema, config, metadata)
+      val resp = service.postExtractor(extInput)
+      status(resp) mustBe 201
+
+      val addressSingleSource = "https://run.mocky.io/v3/f6abb769-7fc6-4e19-9313-e09096de138c"
+      val inputConfig2: InputConfigForm = InputConfigForm(addressSingleSource, Some("$"), Some(freq))
+      val config2: IOConfigForm = IOConfigForm(inputConfig2, kafkaConfig)
+
+      val extInput2 = ExtractorFormInput(ExtractorType.Http.toString,schema, config2, metadata)
+      val resp2 = service.postExtractor(extInput2)
+      status(resp2) mustBe 201
+
+      val addressJsonPath = "https://run.mocky.io/v3/dec8605f-60b5-4517-bcba-427ac5e316f4"
+      val inputConfig3: InputConfigForm = InputConfigForm(addressJsonPath, Some("$.resources"), Some(freq))
+      val config3: IOConfigForm = IOConfigForm(inputConfig3, kafkaConfig)
+
+      val extInput3 = ExtractorFormInput(ExtractorType.Http.toString,schema, config3, metadata)
+      val resp3 = service.postExtractor(extInput3)
+      status(resp3) mustBe 201
+
+      val result = service.getAllExtractors(100)
+      println(contentAsString(result))
+      status(result) mustBe 200
+      (contentAsJson(result) \ "items").as[Int] mustBe 3
+
     }
   }
 

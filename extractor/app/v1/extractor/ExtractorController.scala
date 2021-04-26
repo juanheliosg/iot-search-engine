@@ -99,5 +99,12 @@ class ExtractorController @Inject() (val cc: ControllerComponents, val extractor
     }
   }
 
+  def getAll(items: Long = 100) : Action[AnyContent] = Action.async{ implicit request => {
+      logger.trace(s"Getting $items extractors from request ${request.id}")
+      extractorServiceImpl.getAllExtractors(items)
+
+    }
+
+
   override protected def controllerComponents: ControllerComponents = cc
 }
