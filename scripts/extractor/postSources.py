@@ -82,7 +82,9 @@ sensorSmartMobile = {
                  {"name": "Temperature",
                 "field": "ayto:temperature",
                 "unit":"celsius"},
-                ]
+                ],
+            "latField": "ayto:latitude",
+            "longField": "ayto:longitude"
             },
         "IOConfig":{
             "inputConfig": {
@@ -128,7 +130,9 @@ sensorSmartEnvMonitoring = {
                 {"name": "Temperature",
                 "field": "ayto:temperature",
                 "unit": "celsius"}
-                ]
+                ],
+            "latField": "ayto:latitude",
+            "longField": "ayto:longitude"
             },
         "IOConfig":{
             "inputConfig": {
@@ -173,7 +177,9 @@ sensorContainers = {
                 {"name": "Temperature",
                 "field": "ayto:temperatura",
                 "unit": "celsius"}
-                ]
+                ],
+            "latField": "ayto:latitud",
+            "longField": "ayto:longitud"
             },
         "IOConfig":{
             "inputConfig": {

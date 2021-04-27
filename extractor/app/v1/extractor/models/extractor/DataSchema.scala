@@ -8,15 +8,17 @@ import play.api.libs.json.{Format, Json}
  *
  * @param sensorIDField External ID field
  * @param timestampField timestamp field
+ * @param latField latitude field
+ * @param longField long field
  * @param measures list of measures
  */
-case class DataSchema(sensorIDField: String, timestampField: String, measures: List[MeasureField])
+case class DataSchema(sensorIDField: String, timestampField: String, measures: List[MeasureField], latField :Option[String] = None, longField: Option[String] = None)
 
 object DataSchema{
   /**
    * Compose a system unique identifier for a time series identified by sensor ID, source ID and measure ID
    * @param sensorID
-   * @param sourceID
+   * @param extID
    * @param measureID
    * @return identifier
    */

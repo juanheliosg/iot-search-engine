@@ -1,7 +1,6 @@
 package v1.test
 
 
-import akka.persistence.cassandra.cleanup.Cleanup
 import akka.util.Timeout
 import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
@@ -11,9 +10,8 @@ import org.testcontainers.containers.{CassandraContainer, KafkaContainer}
 import org.testcontainers.utility.DockerImageName
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.Json
 import play.api.test.Helpers.{contentAsJson, contentAsString, status}
-import spray.json.JsArray
 import v1.extractor._
 import v1.extractor.models.extractor.config.{HttpInputConfig, InputConfig, KafkaConfig}
 import v1.extractor.models.extractor.{DataSchema, ExtractorGetResponse, MeasureField}
@@ -64,7 +62,7 @@ class ExtractorServiceImplTest extends PlaySpec
     new MeasureField("intensity", "ayto:intensidad","%")))
 
   val freq = 3000
-  val metadata = Metadata("traffic-santander",Some("Santander traffic flow sensors"),Seq("traffic","static"),
+  val metadata: Metadata = Metadata("traffic-santander",Some("Santander traffic flow sensors"),Seq("traffic","static"),
     new Sample(1,"seconds"),
     new Location("santander city",city=Some("Santander"),region=Some("Santander"),country=Some("Spain")),
     url = Some("http://datos.santander.es/dataset/?id=datos-trafico"))

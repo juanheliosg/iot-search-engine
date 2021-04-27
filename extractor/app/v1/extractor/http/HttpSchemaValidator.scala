@@ -35,6 +35,10 @@ object HttpSchemaValidator extends SchemaValidator{
     if (!json.keys.contains(schema.sensorIDField)) {
       errors.addOne(ValidationError("Can't find sensorID field in JSON"))
     }
+    if (schema.longField.nonEmpty && schema.latField.nonEmpty){
+      if ( ! (json.keys.contains(schema.longField.get) && json.keys.contains(schema.latField.get)))
+        errors.addOne(ValidationError("Cant find lat long fields in JSON"))
+    }
     if (json.keys.contains(schema.timestampField)) {
       val dateValid = (json \ schema.timestampField).asOpt[String] match{
         case Some(date) => {

@@ -15,7 +15,7 @@ import scala.concurrent.Future
 
 class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
 
-  val serviceImplMock = mock[ExtractorServiceImpl]
+  val serviceImplMock: ExtractorServiceImpl = mock[ExtractorServiceImpl]
   val extDataMock = mock[ExtractorFormInput]
   when(serviceImplMock.postExtractor(extDataMock)).thenReturn(Future{Created("Ok")})
   val controller = new ExtractorController(Helpers.stubControllerComponents(), serviceImplMock)
@@ -24,6 +24,7 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
   val addressSingleSource = "https://run.mocky.io/v3/f6abb769-7fc6-4e19-9313-e09096de138c"
   val addressList =  "https://run.mocky.io/v3/c4017730-abcc-43ac-b28e-5292ddddc9e8"
   val emptyMeasure = "https://run.mocky.io/v3/08884f55-3e2c-4dd1-a79d-9d2251a7505a"
+  val latLongAdress = "https://run.mocky.io/v3/26b6803d-5717-44a2-9a2f-d0f841641e7a"
   val wrongTypeAdress = "https://run.mocky.io/v3/524d0930-1bc4-4d53-94ac-87894624bf42"
   val wrongContentType = "https://run.mocky.io/v3/9f143a4f-b194-40a3-9fae-0f6bd215c018"
 
@@ -401,6 +402,102 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
       )
       val correctValidation = ExtractorForm.form.bind(json,100000).fold(
         formWithErrors => {
+          false
+        },
+        extData => {
+          true
+        }
+      )
+      correctValidation mustBe true
+    }
+    "fail if latField provided but not longField" in {
+      val json = Json.obj(
+        "type" -> "http",
+        "dataSchema" -> Json.obj(
+          "sensorIDField" -> "dc:identifier",
+          "timestampField" -> "dc:modified",
+          "measures" -> Json.arr(
+            Json.obj(
+              "name"-> "CO",
+              "field" -> "ayto:CO",
+              "unit" -> "db"
+            )
+          ),
+          "latField" -> "ayto:latitude",
+        ),
+        "IOConfig" -> Json.obj(
+          "inputConfig" -> Json.obj(
+            "address" -> latLongAdress,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          )),
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
+      )
+      val correctValidation = ExtractorForm.form.bind(json,100000).fold(
+        formWithErrors => {
+          formWithErrors.errors(0).message mustBe "The longitude and latitude fields must be either full or both empty"
+          false
+        },
+        extData => {
+          true
+        }
+      )
+      correctValidation mustBe false
+
+    }
+    "work when latField or longField are provided" in {
+      val json = Json.obj(
+        "type" -> "http",
+        "dataSchema" -> Json.obj(
+          "sensorIDField" -> "dc:identifier",
+          "timestampField" -> "dc:modified",
+          "measures" -> Json.arr(
+            Json.obj(
+              "name"-> "CO",
+              "field" -> "ayto:CO",
+              "unit" -> "db"
+            )
+          ),
+          "latField" -> "ayto:latitude",
+          "longField" -> "ayto:longitude"
+        ),
+        "IOConfig" -> Json.obj(
+          "inputConfig" -> Json.obj(
+            "address" -> latLongAdress,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          )),
+        "metadata" -> Json.obj(
+          "name" -> "santander-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Santander"
+          )
+        )
+      )
+      val correctValidation = ExtractorForm.form.bind(json,100000).fold(
+        formWithErrors => {
+          println(formWithErrors.errors(0).message)
           false
         },
         extData => {
