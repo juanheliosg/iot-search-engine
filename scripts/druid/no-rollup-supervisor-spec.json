@@ -21,10 +21,15 @@
         {"type":  "string", "name":  "tags"},
         {"type":  "string", "name":  "description"},
         {"type": "string", "name": "sensorID"},
+        {"type": "string", "name":  "long"},
+        {"type": "string", "name":  "lat"},
           {"type": "long", "name": "measureID" },
           {"type": "string", "name": "sourceID" }
-
-      ]
+      ],
+      "spatialDimensions": [{
+        "dimName": "coordinates",
+        "dims": ["lat","long"]
+      }]
     },
     "metricsSpec": [
       {

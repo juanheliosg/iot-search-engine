@@ -1,7 +1,7 @@
 package v1.extractor
 
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import play.api.data.FormError
 import play.api.data.validation.{Constraint, Invalid, ValidationResult}
 import play.api.libs.json._
@@ -26,8 +26,8 @@ object InputConfigForm{
 
 /**
  * InputConfig and Kafka config form
- * @param inputConfig
- * @param kafkaConfig
+ * @param inputConfig config for form
+ * @param kafkaConfig kafka config
  */
 case class IOConfigForm(inputConfig: InputConfigForm, kafkaConfig: KafkaConfig)
 object IOConfigForm{
@@ -66,35 +66,37 @@ object ExtractorForm{
     }
   }
 
-  val config = ConfigFactory.defaultApplication().resolve()
-  val sensorsToCheck = config.getInt("extractor.sensors-to-check")
-  val maxSensors =  config.getInt("extractor.max-sensor-per-extractor")
+  val config: Config = ConfigFactory.defaultApplication().resolve()
+  val sensorsToCheck: Int = config.getInt("extractor.sensors-to-check")
+  val maxSensors: Int =  config.getInt("extractor.max-sensor-per-extractor")
 
 
-  /**
-   * A form for extractors
-   * @param extType type of the extractor
-   * @param dataSchema mapping for source
-   * @param ioConfig connection config
-   */
 
   val schemaMappingCheck: Constraint[ExtractorFormInput] = Constraint("constraints.schemacheck")({
     extractorInput => {
-      ExtractorType.withName(extractorInput.extType) match {
-        case ExtractorType.Http =>
-          HttpSchemaValidator.validate(extractorInput,
-            sensorsToCheck
-            , maxSensors
-           ) //Numero mágico a sustituir por configuraicón
-        case _ => Invalid("Invalid extractor type")
-      }
 
+      val isLatEmpty = extractorInput.dataSchema.latField.isEmpty
+      val isLongEmpty = extractorInput.dataSchema.longField.isEmpty
+      if ( (!isLatEmpty && isLongEmpty) ||
+        ( (isLatEmpty) && (!isLongEmpty))) {
+        Invalid("The longitude and latitude fields must be either full or both empty")
+      }
+      else{
+        ExtractorType.withName(extractorInput.extType) match {
+          case ExtractorType.Http =>
+            HttpSchemaValidator.validate(extractorInput,
+              sensorsToCheck
+              , maxSensors
+            )
+          case _ => Invalid("Invalid extractor type")
+        }
+      }
     }
   })
   val maxSizeDescription = 256
   val maxSizeName = 32
 
-  val form = Form(
+  val form: Form[ExtractorFormInput] = Form(
       mapping(
         "type" -> nonEmptyText.verifying("Bad type",ExtractorType.isExtractorType(_)),
         "dataSchema" -> mapping(
@@ -107,7 +109,9 @@ object ExtractorForm{
               "unit" -> nonEmptyText,
               "description" -> optional(text(maxLength=maxSizeDescription))
             )(MeasureField.apply)(MeasureField.unapply)
-          ).verifying("No measures", _.size > 0)
+          ).verifying("No measures", _.nonEmpty),
+          "latField" -> optional(nonEmptyText),
+          "longField" -> optional(nonEmptyText),
         )(DataSchema.apply)(DataSchema.unapply),
         "IOConfig" -> mapping(
           "inputConfig" -> mapping(
@@ -116,7 +120,7 @@ object ExtractorForm{
             "freq" -> optional(longNumber(min=1))
             )(InputConfigForm.apply)(InputConfigForm.unapply),
           "kafkaConfig" -> mapping(
-            "topic" -> nonEmptyText, //Aquí no se checkea la validez del server
+            "topic" -> nonEmptyText,
             "server" -> nonEmptyText
           )(KafkaConfig.apply)(KafkaConfig.unapply)
         )(IOConfigForm.apply)(IOConfigForm.unapply)

@@ -5,15 +5,13 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Results.{Created, Ok}
 import play.api.mvc._
-import play.api.test.Helpers.{DELETE, GET, POST, PUT, contentAsJson, contentAsString, defaultAwaitTimeout, status}
+import play.api.test.Helpers.{DELETE, GET, POST, contentAsJson, defaultAwaitTimeout, status}
 import play.api.test.{FakeRequest, Helpers}
 import v1.extractor.models.extractor.config.KafkaConfig
 import v1.extractor.models.extractor.{DataSchema, MeasureField}
 import v1.extractor.models.metadata.{Location, Metadata, Sample}
-import v1.extractor.{ExtractorController, ExtractorFormInput, ExtractorServiceImpl, ExtractorType, IOConfigForm, InputConfigForm}
+import v1.extractor._
 
-import java.time.LocalDateTime
-import java.util.Date
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -23,12 +21,12 @@ class ExtractorControllerTest extends PlaySpec
   val serviceImplMock: ExtractorServiceImpl = mock[ExtractorServiceImpl]
   val id = 1
 
-  val metadata = Metadata("traffic-santander",Some("Santander traffic flow sensors"),Seq("traffic","static"),
+  val metadata: Metadata = Metadata("traffic-santander",Some("Santander traffic flow sensors"),Seq("traffic","static"),
     new Sample(1,"seconds"),
     new Location("santander city",city=Some("Santander"),region=Some("Santander"),country=Some("Spain")),
     url = Some("http://datos.santander.es/dataset/?id=datos-trafico"))
 
-  val extData = ExtractorFormInput("http",
+  val extData: ExtractorFormInput = ExtractorFormInput("http",
     DataSchema("ayto:idSensor", "dc:modified",  List(
       new MeasureField("ocupation","ayto:ocupacion","veh/h"
         ,Some("Vehículos por hora sobre una espiga")),
