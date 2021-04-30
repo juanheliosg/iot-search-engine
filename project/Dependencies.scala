@@ -38,11 +38,14 @@ object Dependencies{
    val playScalaTest = "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0"
    val mockitoScala = "org.mockito" %% "mockito-scala" % "1.16.0"
 
+
    val commonDeps = Seq(scalaTest % Test, mockitoScala % Test, scalastic, logs, guice)
    val extractorDeps = Seq(playScalaTest % Test, ws,
       akkaPersistanceTest, akkaTestKit, akkaQuery,
       akka, akkaPersistence, akkaSharding,clusterSharding, cassandraAkka,
       akkaKafka, akkaStreams, alpakkaJSON, akkaSerialization, sprayJson,
       kafkaClient, kafkaTestContainers % Test, cassandraTestContainer % Test)
+
+   val querierDeps = Seq(playScalaTest % Test, ws)
 
 }

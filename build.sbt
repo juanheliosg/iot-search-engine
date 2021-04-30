@@ -34,6 +34,24 @@ lazy val extractor = (project in file("extractor"))
     libraryDependencies ++= extractorDeps,
 ).settings(extractorDockerSettings)
 
+lazy val querierDockerSettings = Seq(
+  Docker / maintainer := "juanheliosg@correo.ugr.es", //
+  packageName in Docker := "iot-se-querier",
+  Docker / version := sys.env.getOrElse("BUILD_NUMBER", "0"),
+  dockerExposedPorts := Seq(1600),
+  dockerBaseImage := "openjdk:8-jre-alpine",
+  dockerUpdateLatest := true
+)
+
+lazy val querier = (project in file("querier"))
+  .enablePlugins(PlayScala, AshScriptPlugin, DockerPlugin)
+  .settings(
+    Test / scalaSource :=  baseDirectory.value / "/test/",
+    buildSettings,
+    name := "extractor",
+    libraryDependencies ++= querierDeps
+  ).settings(querierDockerSettings)
+
 
 testOptions += Setup( cl =>
   cl.loadClass("org.slf4j.LoggerFactory").

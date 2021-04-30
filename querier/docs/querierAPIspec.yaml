@@ -1,0 +1,311 @@
+openapi: 3.0.1
+info:
+  title: iotse query API
+  description: Especificación de la API de consulta para el iot-search-engine
+  license:
+    name: A ser determinada
+  version: 0.0.1
+servers:
+  - url: https://localhost/v1
+  - url: http://localhost/v1
+tags:
+  - name: query
+    description: Objeto consulta donde se archivan las posibles consultas que se le
+      pueden hacer al sistema
+paths:
+  /tags:
+    tags:
+      - query
+    get:
+      summary: Endpoint para recuperar los tags disponibles en el sistema
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: nombre de la etiqueta
+                    count:
+                      type: number
+                      description: Numero de series temporales con esta etiqueta
+  /names:
+    tags:
+      - query
+    get:
+      summary: Endpoint para recuperar los nombrs de fuentes disponibles en el sistema
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: nombre de la etiqueta
+                    count:
+                      type: number
+                      description: Numero de series temporales con esta fuente
+
+  /query:
+    post:
+      tags:
+        - query
+      summary: Endpoint para hacer consultas al buscador
+      description: Unico punto de entrada para hacer consultas al buscador
+      requestBody:
+        description: Objeto consulta a  ser procesado
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+        required: true
+      responses:
+        400:
+          description: Invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryError'
+
+        200:
+          description: Todo correcto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+
+components:
+  schemas:
+    QueryError:
+      type: object
+      properties:
+        error:
+          type: string
+        errorMessage:
+          type: string
+
+    Query:
+      type: object
+      required:
+        - "limit"
+        - "timeRange"
+        - "filter"
+      properties:
+        limit:
+          type: number
+          description: Numero de entradas de búsqueda a ser resueltas.
+        timeRange:
+          type: array
+          items:
+            type: object
+            properties:
+              lowerBound:
+                type: string
+                format: date-time
+              upper_bound:
+                type: string
+                format: date-time
+        type:
+          type: string
+          description: "Tipo de consulta para diferenciar entre simple y compleja.
+          Las consultas simples hacen uso solo de operacione slice and dice para quedarse con los datos.
+          Las consultas complejas computan agregaciones y filtran por estas mismas agregaciones además de poder hacer las consultas anteriores.
+          Las consultas complejas calculan lo anterior y características de la serie temporal
+          (descomposiciones, subsecuencias, estadísticas de la serie temporal)"
+          enum:
+            - simple
+            - aggregation
+            - complex
+        filter:
+          $ref:  "#/components/schemas/SQLWhereFilter"
+        subsequenceQuery:
+          $ref: '#/components/schemas/SubsequenceQuery'
+        aggregationFilter:
+          $ref: '#/components/schemas/AggregationFilter'
+        tendencyQuery:
+          $ref: '#/components/schemas/TendencyFilter'
+        order:
+          $ref:  "#/components/schemas/OrderByField"
+
+
+
+    SQLWhereFilter:
+      type: string
+      description: Consulta en SQL sobre los campos de la base de datos. Debe de estar bien formada. Solo puede contener claúsulas en el Where.
+
+    SubsequenceQuery:
+      type: object
+      description: Consulta para obtener las subsecuencias más cercanas a la proporcionada
+      properties:
+        equality:
+          type: boolean
+          description: true if searching equal subsequences false otherwise
+        normalization:
+          type: boolean
+          description: Normalización o no de la consulta. Verdadero por defecto
+        subsequence:
+          type: array
+          description: Subsecuencia de valores ordenados de manera que el item en la posicion 0 se corresponde con el instante 0 de la subsecuencia
+          items:
+            type: number
+
+    TendencyFilter:
+      type: string
+      enum:
+        - asc
+        - desc
+      description: Consulta por tendencia de la serie temporal para ver si es ascendente o descendente
+
+
+    OrderByField:
+      type: array
+      description: Campos por los que ordenar los valores en orden de prioridad
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+            enum:
+              - measure_name
+              - unit
+              - measure_desc
+              - name
+              - city
+              - region
+              - country
+              - address
+              - description
+              - sampling_unit
+              - sampling_freq
+            description: Campo por el que ordenar
+          asc:
+            type: boolean
+            description: Declara si el orden es ascendente o descendente.
+
+    QueryResponse:
+      type: object
+      description: Objeto que se devuelve para cada sensor que cumple con las características consultadas
+      properties:
+        sourceName:
+          type: string
+        sensorId:
+          type: string
+        description:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+        country:
+          type: string
+        address:
+          type: string
+        sampling_unit:
+          type: string
+        sampling_freq:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        coordinates:
+          type: array
+          description: Coordinadas en latitud longitud
+          items:
+            type: string
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              seriesId:
+                type: string
+              measureName:
+                type: string
+              subsequences:
+                type: array
+                description: Subsecuencias de la serie temporal si se ha dado una subsecuencia para buscar
+                items:
+                  type: object
+                  properties:
+                    ed:
+                      type: number
+                      description: Distancia euclidea entre la subsecuencia a buscar y esta
+                    start:
+                      type: number
+                      format: int
+                      description: Principio de la subsecuencia
+                    end:
+                      type: number
+                      format: int
+                      description: Final de la subsecuencia
+
+              stats:
+                type: array
+                description: Estadísticas de la serie temporal calculada.
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: number
+
+              serie:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  measure:
+                    type: number
+
+
+
+    AggregationFilter:
+      type: object
+      description: Consulta de comparación de un valor con agregaciones o de agregaciones con agregaciones (salarios medios mayores que la media)
+      properties:
+        operation:
+          type: string
+          enum:
+            - avg
+            - std
+            - sum
+            - max
+            - min
+            - count
+          description: Tipo de función de agregación o valor simple con el que comparar los valores de las mediciones. En el caso de coger una función de agregación
+        value:
+          type: number
+          format: double
+          description: Valor con el que comparar el valor o la función de agregación seleccionada si se ha puesto un valor
+
+        aggComparation:
+          type: string
+          enum:
+            - avg
+            - std
+            - sum
+            - max
+            - min
+            - count
+          description: Función de agregación con la que comparar la primera para consultas del tipo "sensores cuya media es mayor que la media". Si está vacio solo se calculan las medias
+
+        relation:
+          type: string
+          enum:
+            - "="
+            - ">"
+            - "<"
+            - ">="
+            - "<="
+          description: Comparaciones de la forma valor lt agregación
