@@ -24,9 +24,8 @@ class QuerierController @Inject() (val cc: ControllerComponents)
       },
       query => {
         query.queryType match {
-          case QueryType.simple => Ok("")
-          case QueryType.aggregation => Ok("")
-          case QueryType.complex => Ok("")
+          case QueryType.complex => Future{Ok("")}
+          case _ => Future{Ok("")}
         }
       }
     )
