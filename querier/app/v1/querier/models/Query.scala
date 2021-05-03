@@ -1,14 +1,20 @@
 package v1.querier.models
 
+import com.typesafe.config.{Config, ConfigFactory}
 import v1.querier.models
+import v1.querier.models.Query.datasource
 
+object Query{
+  val config: Config = ConfigFactory.defaultApplication().resolve()
+  val datasource = config.getString("querier.datasource")
+}
 
 /**
  * Query to be submited to the system
  *
  * @param limit number of elements to be retrieved
  * @param timeRanges list of time ranges en ISO format to be considered
- * @param queryType type of query can be simple, aggregation and complex
+ * @param query type of query can be simple, aggregation and complex
  * @param filter SQL Where clause to filter
  * @param subseQuery Subsequence to be search in the database
  * @param aggregationFilter List of aggregations filters
@@ -22,6 +28,78 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
                  tendencyQuery: Option[String] = None, order: Option[List[Order]] = None){
 
   val queryType: QueryType.Value = QueryType.withName(query)
+
+  /**
+   * Compose where clausule with intervals and filters
+   * @return
+   */
+  def composeWhere(): String = {
+    val intervalQuery = timeRanges.map( range => {
+      s"(__time >= '${range._1}' AND __time <= '${range._2}')"
+    }).mkString(" OR ")
+
+    s" WHERE $intervalQuery AND $filter"
+  }
+
+  /**
+   * Compose a basic query using intervals and filters
+   * @return
+   */
+  def composeBasicQuery: String = {
+    s"SELECT * FROM $datasource $composeWhere ORDER BY __time"
+  }
+
+  /**
+   * Compose an aggregation query
+   * agg
+   * @return
+   */
+  def composeAggregationQuery: String = {
+    val aggFilter = aggregationFilter.get
+    val aggResults = aggFilter.map(agg => s" ${agg.aggreg}_agg ").toSet.mkString(",")
+    val whereClausule = composeWhere()
+
+    val selection =
+      s"SELECT seriesID, sensorID, __time, address, city, country, description, " +
+        "measure, measure_desc, measure_name, name, region, sampling_unit," +
+        s" tags, unit, $aggResults FROM "
+
+    val aggComputation = aggFilter.map( filter =>{
+        val agg = filter.aggreg
+        if (agg != "count")
+          s"$agg(measure) AS ${agg}_agg "
+
+        else  s"$agg(*) AS ${agg}_agg "
+    }
+    ).toSet.mkString(",")
+
+    val havingClausule = aggFilter.map(filter => {
+      if (filter.value.nonEmpty){
+        s"${filter.aggreg}_agg ${filter.relation.get} ${filter.value.get}"
+      }
+      else if(filter.aggComparation.nonEmpty){
+        s"${filter.aggreg}_agg ${filter.relation.get} " +
+          s"(SELECT ${
+            val agg = filter.aggComparation.get
+            if (agg != "count")
+              s"$agg(measure) AS ${agg}_agg "
+            else  s"$agg(*) AS ${agg}_agg "
+          } FROM $datasource $whereClausule)"
+      }
+      else{
+        Nil
+      }
+    }).filter(_ != Nil).mkString(" AND ")
+
+
+    s"$selection (SELECT * FROM $datasource $whereClausule )" +
+      s" INNER JOIN" +
+      s"(SELECT seriesID as seriesID2, $aggResults FROM " +
+        s"(SELECT DISTINCT(seriesID), $aggComputation FROM $datasource" +
+        s"$whereClausule GROUP BY 1 HAVING $havingClausule))" +
+      s"ON seriesID = seriesID2 ORDER BY __time"
+
+  }
 }
 
 object QueryType extends ExtendedEnum {
@@ -76,13 +154,13 @@ case class Order(field: String, asc: Boolean = true){
  * @param relation relación entre la agregación dad y el valor o agregación secundaria
  */
 case class AggregationFilter(aggreg: String,
-                             value : Option[BigDecimal],
-                             aggComparation: Option[String],
-                             relation: Option[String]){
+                             value : Option[BigDecimal]=None,
+                             aggComparation: Option[String]=None,
+                             relation: Option[String] = None){
 
   val aggregType = AggregationType.withName(aggreg)
 
-  val aggComparationType: Option[AggregationType.Value] = relation match {
+  val aggComparationType: Option[AggregationType.Value] = aggComparation match {
     case Some(value) => Some(AggregationType.withName(value))
     case None => None
   }

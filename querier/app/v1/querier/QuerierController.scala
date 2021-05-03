@@ -3,6 +3,7 @@ package v1.querier
 import play.api.Logger
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
+import v1.querier.models.QueryType
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,7 +23,11 @@ class QuerierController @Inject() (val cc: ControllerComponents)
         }
       },
       query => {
-        Future{Ok("")}
+        query.queryType match {
+          case QueryType.simple => Ok("")
+          case QueryType.aggregation => Ok("")
+          case QueryType.complex => Ok("")
+        }
       }
     )
   }
