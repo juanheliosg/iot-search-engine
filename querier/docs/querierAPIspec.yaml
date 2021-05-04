@@ -104,6 +104,7 @@ components:
           description: Numero de entradas de búsqueda a ser resueltas.
         timeRange:
           type: array
+          description: Intervalos con limite inferior y superior de horas en formato ISO con tiempo UTC
           items:
             type: object
             properties:
@@ -132,8 +133,6 @@ components:
           $ref: '#/components/schemas/AggregationFilter'
         tendencyQuery:
           $ref: '#/components/schemas/TendencyFilter'
-        order:
-          $ref:  "#/components/schemas/OrderByField"
 
 
 
@@ -165,101 +164,49 @@ components:
       description: Consulta por tendencia de la serie temporal para ver si es ascendente o descendente
 
 
-    OrderByField:
-      type: array
-      description: Campos por los que ordenar los valores en orden de prioridad
-      items:
-        type: object
-        properties:
-          field:
-            type: string
-            enum:
-              - measure_name
-              - unit
-              - measure_desc
-              - name
-              - city
-              - region
-              - country
-              - address
-              - description
-              - sampling_unit
-              - sampling_freq
-            description: Campo por el que ordenar
-          asc:
-            type: boolean
-            description: Declara si el orden es ascendente o descendente.
-
     QueryResponse:
       type: object
-      description: Objeto que se devuelve para cada sensor que cumple con las características consultadas
+      description: Objeto que se devuelve para cada serie temporal de un sensor que cumple con las características consultadas
       properties:
-        sourceName:
-          type: string
-        sensorId:
-          type: string
-        description:
-          type: string
-        city:
-          type: string
-        region:
-          type: string
-        country:
-          type: string
-        address:
-          type: string
-        sampling_unit:
-          type: string
-        sampling_freq:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-        coordinates:
-          type: array
-          description: Coordinadas en latitud longitud
-          items:
-            type: string
+        items:
+          type: number
         series:
-          type: array
-          items:
-            type: object
-            properties:
-              seriesId:
+          type: object
+          properties:
+            seriesId:
+              type: string
+            sourceName:
+              type: string
+            sensorId:
+              type: string
+            description:
+              type: string
+            city:
+              type: string
+            region:
+              type: string
+            country:
+              type: string
+            address:
+              type: string
+            samplingUnit:
+              type: string
+            samplingFreq:
+              type: string
+            measureName:
+              type: string
+            tags:
+              type: array
+              items:
                 type: string
-              measureName:
+            coordinates:
+              type: array
+              description: Coordinadas en latitud longitud
+              items:
                 type: string
-              subsequences:
-                type: array
-                description: Subsecuencias de la serie temporal si se ha dado una subsecuencia para buscar
-                items:
-                  type: object
-                  properties:
-                    ed:
-                      type: number
-                      description: Distancia euclidea entre la subsecuencia a buscar y esta
-                    start:
-                      type: number
-                      format: int
-                      description: Principio de la subsecuencia
-                    end:
-                      type: number
-                      format: int
-                      description: Final de la subsecuencia
-
-              stats:
-                type: array
-                description: Estadísticas de la serie temporal calculada.
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    value:
-                      type: number
-
-              serie:
+            timeSeries:
+              type: array
+              items:
                 type: object
                 properties:
                   timestamp:
@@ -267,6 +214,37 @@ components:
                     format: date-time
                   measure:
                     type: number
+            subsequences:
+              type: array
+              description: Subsecuencias de la serie temporal si se ha dado una subsecuencia para buscar
+              items:
+                type: object
+                properties:
+                  ed:
+                    type: number
+                    description: Distancia euclidea entre la subsecuencia a buscar y esta
+                  start:
+                    type: number
+                    format: int
+                    description: Principio de la subsecuencia
+                  end:
+                    type: number
+                    format: int
+                    description: Final de la subsecuencia
+            stats:
+              type: array
+              description: Estadísticas de la serie temporal calculada.
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: number
+
+
+
+
 
 
 

@@ -15,4 +15,13 @@ object JSONError{
     )
   }
 
+  def format(error: DruidError): JsValue = {
+    Json.arr(
+        Json.obj(
+          "error" -> error.error,
+          "errorMessage" -> error.errorMessage
+      )
+    )
+  }
+
 }

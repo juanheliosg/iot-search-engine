@@ -23,7 +23,7 @@ class DruidAPIManagerTest extends PlaySpec
     "return records in non aggreg DruidRecord object" in {
       val mockWsRequest = mock[WSRequest]
       val mockResponse = mock[WSResponse]
-
+      when(mockResponse.status).thenReturn(200)
       when(mockResponse.json).thenReturn(
         Json.arr(
           Json.obj(
@@ -39,6 +39,9 @@ class DruidAPIManagerTest extends PlaySpec
             "name" -> "sensor-temp-granada",
             "region" -> "",
             "sampling_unit" -> "",
+            "sampling_freq" -> "",
+            "measure_desc" -> "",
+            "coordinates" -> Json.arr("",""),
             "tags" -> Json.arr("we","aw"),
             "unit" -> "grados"
           ),
@@ -55,6 +58,9 @@ class DruidAPIManagerTest extends PlaySpec
             "name" -> "sensor-temp-granada",
             "region" -> "",
             "sampling_unit" -> "",
+            "sampling_freq" -> "",
+            "measure_desc" -> "",
+            "coordinates" -> Json.arr("",""),
             "tags" -> Json.arr("we","aw"),
             "unit" -> "grados"
           ),
@@ -71,6 +77,9 @@ class DruidAPIManagerTest extends PlaySpec
             "name" -> "sensor-temp-granada",
             "region" -> "",
             "sampling_unit" -> "",
+            "sampling_freq" -> "",
+            "measure_desc" -> "",
+            "coordinates" -> Json.arr("",""),
             "tags" -> Json.arr("we","aw"),
             "unit" -> "grados"
           )
@@ -83,28 +92,83 @@ class DruidAPIManagerTest extends PlaySpec
         Future{mockResponse}
       )
 
+
       when(druidApiSpy.request).thenReturn(mockWsRequest)
 
+
       val expectedResults = List(
-        DruidRecord("12","12","2021-05-03T11:14:59Z","","","","",4.0,
-          "temp","sensor-temp-granada","","",List("we","aw"),"grados"),
-        DruidRecord("12","12","2021-05-03T11:15:59Z","","","","",1.0,
-          "temp","sensor-temp-granada","","",List("we","aw"),"grados"),
-        DruidRecord("12","12","2021-05-03T11:16:59Z","","","","",43.0,
-          "temp","sensor-temp-granada","","",List("we","aw"),"grados")
+        DruidRecord(seriesID = "12",
+          sensorID = "12",
+          __time = "2021-05-03T11:14:59Z",
+          address = "",
+          city = "",
+          country = "",
+          description = "",
+          measure = 4.0,
+          measure_name = "temp",
+          unit ="grados",
+          measure_desc = "",
+          name = "sensor-temp-granada",
+          region = "",
+          sampling_unit = "",
+          sampling_freq = "",
+          coordinates = List("",""),
+          tags = List("we","aw")),
+        DruidRecord(seriesID = "12",
+          sensorID = "12",
+          __time = "2021-05-03T11:15:59Z",
+          address = "",
+          city = "",
+          country = "",
+          description = "",
+          measure = 1.0,
+          measure_name = "temp",
+          unit ="grados",
+          measure_desc = "",
+          name = "sensor-temp-granada",
+          region = "",
+          sampling_unit = "",
+          sampling_freq = "",
+          coordinates = List("",""),
+          tags = List("we","aw")),
+        DruidRecord(seriesID = "12",
+          sensorID = "12",
+          __time = "2021-05-03T11:16:59Z",
+          address = "",
+          city = "",
+          country = "",
+          description = "",
+          measure = 43,
+          measure_name = "temp",
+          unit ="grados",
+          measure_desc = "",
+          name = "sensor-temp-granada",
+          region = "",
+          sampling_unit = "",
+          sampling_freq = "",
+          coordinates = List("",""),
+          tags = List("we","aw"))
       )
 
       val responseFuture = druidApiSpy.getRecords("CONSULTA")
 
       val response = Await.result(responseFuture, Duration.Inf)
 
-      response mustBe expectedResults
-      response.size mustBe 3
+      response match{
+        case Left(value) =>
+          value mustBe expectedResults
+          value.size mustBe 3
+        case Right(value) =>{
+
+          fail()
+        }
+      }
     }
     "return records with agg measures " in {
       val mockWsRequest = mock[WSRequest]
       val mockResponse = mock[WSResponse]
 
+      when(mockResponse.status).thenReturn(200)
       when(mockResponse.json).thenReturn(
         Json.arr(
           Json.obj(
@@ -117,11 +181,14 @@ class DruidAPIManagerTest extends PlaySpec
             "description" -> "",
             "measure" -> 4.0,
             "measure_name" -> "temp",
+            "sampling_freq" -> "",
             "name" -> "sensor-temp-granada",
             "region" -> "",
             "sampling_unit" -> "",
             "tags" -> Json.arr("we","aw"),
             "unit" -> "grados",
+            "measure_desc" -> "",
+            "coordinates" -> Json.arr("",""),
             "avg_agg" -> 12.0,
             "min_agg" -> 3.5
           ),
@@ -138,6 +205,9 @@ class DruidAPIManagerTest extends PlaySpec
             "name" -> "sensor-temp-granada",
             "region" -> "",
             "sampling_unit" -> "",
+            "sampling_freq" -> "",
+            "measure_desc" -> "",
+            "coordinates" -> Json.arr("",""),
             "tags" -> Json.arr("we","aw"),
             "unit" -> "grados",
             "avg_agg" -> 12.0,
@@ -151,11 +221,14 @@ class DruidAPIManagerTest extends PlaySpec
             "city" -> "",
             "country" -> "",
             "description" -> "",
+            "measure_desc" -> "",
+            "coordinates" -> Json.arr("",""),
             "measure" -> 43.0,
             "measure_name" -> "temp",
             "name" -> "sensor-temp-granada",
             "region" -> "",
             "sampling_unit" -> "",
+            "sampling_freq" -> "",
             "tags" -> Json.arr("we","aw"),
             "unit" -> "grados",
             "avg_agg" -> 12.0,
@@ -172,24 +245,145 @@ class DruidAPIManagerTest extends PlaySpec
 
       when(druidApiSpy.request).thenReturn(mockWsRequest)
 
+
       val expectedResults = List(
-        DruidRecord("12","12","2021-05-03T11:14:59Z","","","","",4.0,
-          "temp","sensor-temp-granada","","",List("we","aw"),"grados",
-          avg_agg = Some(12.0),min_agg = Some(3.5)),
-        DruidRecord("12","12","2021-05-03T11:15:59Z","","","","",1.0,
-          "temp","sensor-temp-granada","","",List("we","aw"),"grados",
-          avg_agg = Some(12.0),min_agg = Some(3.5)),
-        DruidRecord("12","12","2021-05-03T11:16:59Z","","","","",43.0,
-          "temp","sensor-temp-granada","","",List("we","aw"),"grados",
-          avg_agg = Some(12.0), min_agg = Some(3.5))
+        DruidRecord(seriesID = "12",
+          sensorID = "12",
+          __time = "2021-05-03T11:14:59Z",
+          address = "",
+          city = "",
+          country = "",
+          description = "",
+          measure = 4.0,
+          measure_name = "temp",
+          unit ="grados",
+          measure_desc = "",
+          name = "sensor-temp-granada",
+          region = "",
+          sampling_unit = "",
+          sampling_freq = "",
+          coordinates = List("",""),
+          tags = List("we","aw"),
+          avg_agg = Some(12.0),
+          min_agg = Some(3.5)),
+        DruidRecord(seriesID = "12",
+          sensorID = "12",
+          __time = "2021-05-03T11:15:59Z",
+          address = "",
+          city = "",
+          country = "",
+          description = "",
+          measure = 1.0,
+          measure_name = "temp",
+          unit ="grados",
+          measure_desc = "",
+          name = "sensor-temp-granada",
+          region = "",
+          sampling_unit = "",
+          sampling_freq = "",
+          coordinates = List("",""),
+          tags = List("we","aw"),
+          avg_agg = Some(12.0),
+          min_agg = Some(3.5)),
+        DruidRecord(seriesID = "12",
+          sensorID = "12",
+          __time = "2021-05-03T11:16:59Z",
+          address = "",
+          city = "",
+          country = "",
+          description = "",
+          measure = 43,
+          measure_name = "temp",
+          unit ="grados",
+          measure_desc = "",
+          name = "sensor-temp-granada",
+          region = "",
+          sampling_unit = "",
+          sampling_freq = "",
+          coordinates = List("",""),
+          tags = List("we","aw"),
+          avg_agg = Some(12.0),
+          min_agg = Some(3.5))
       )
 
       val responseFuture = druidApiSpy.getRecords("CONSULTA")
 
       val response = Await.result(responseFuture, Duration.Inf)
+      response match{
+        case Left(value) =>
+          value mustBe expectedResults
+          value.size mustBe 3
+        case Right(value) =>{
+          fail()
+        }
+      }
+    }
+    "return error if wrong json" in {
+      val mockWsRequest = mock[WSRequest]
+      val mockResponse = mock[WSResponse]
 
-      response mustBe expectedResults
-      response.size mustBe 3
+      when(mockResponse.status).thenReturn(200)
+      when(mockResponse.json).thenReturn(
+        Json.arr(
+          Json.obj(
+            "seriesID" -> "12",
+            "sensorID" -> "12",
+            "__time" -> "2021-05-03T11:14:59Z",
+            "address" -> "")
+        ))
+
+      when(mockWsRequest.post(Json.obj(
+        "query" -> "CONSULTA"
+      ))).thenReturn(
+        Future{mockResponse}
+      )
+
+      when(druidApiSpy.request).thenReturn(mockWsRequest)
+
+      val responseFuture = druidApiSpy.getRecords("CONSULTA")
+
+      val response = Await.result(responseFuture, Duration.Inf)
+      response match{
+        case Left(_) =>
+          fail()
+        case Right(value) =>{
+          value.error mustBe "Json parsing error"
+        }
+      }
+
+    }
+    "return druid error if druid error is sent" in {
+      val mockWsRequest = mock[WSRequest]
+      val mockResponse = mock[WSResponse]
+
+      when(mockResponse.status).thenReturn(400)
+      when(mockResponse.json).thenReturn(
+        Json.obj(
+          "error" -> "SQL parsing error",
+          "errorMessage" -> "Fail parsing where clausule some other things expected",
+          "errorClass" -> "FBD.suspended.exception",
+          "host" -> "yourlocaldruid.com"
+        )
+      )
+
+      when(mockWsRequest.post(Json.obj(
+        "query" -> "CONSULTA"
+      ))).thenReturn(
+        Future{mockResponse}
+      )
+
+      when(druidApiSpy.request).thenReturn(mockWsRequest)
+
+      val responseFuture = druidApiSpy.getRecords("CONSULTA")
+
+      val response = Await.result(responseFuture, Duration.Inf)
+      response match{
+        case Left(_) =>
+          fail()
+        case Right(value) =>{
+          value.error mustBe "SQL parsing error"
+        }
+      }
     }
   }
 

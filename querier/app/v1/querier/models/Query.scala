@@ -25,7 +25,7 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
                  query: String, filter: String,
                  subseQuery: Option[SubsequenceQuery] = None,
                  aggregationFilter: Option[List[AggregationFilter]] = None,
-                 tendencyQuery: Option[String] = None, order: Option[List[Order]] = None){
+                 tendencyQuery: Option[String] = None){
 
   val queryType: QueryType.Value = QueryType.withName(query)
 
@@ -46,7 +46,7 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
    * @return
    */
   def composeBasicQuery: String = {
-    s"SELECT * FROM $datasource $composeWhere ORDER BY __time"
+    s"SELECT * FROM $datasource ${composeWhere()} ORDER BY __time"
   }
 
   /**
@@ -66,10 +66,7 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
 
     val aggComputation = aggFilter.map( filter =>{
         val agg = filter.aggreg
-        if (agg != "count")
-          s"$agg(measure) AS ${agg}_agg "
-
-        else  s"$agg(*) AS ${agg}_agg "
+        s"$agg(measure) AS ${agg}_agg "
     }
     ).toSet.mkString(",")
 
@@ -81,9 +78,7 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
         s"${filter.aggreg}_agg ${filter.relation.get} " +
           s"(SELECT ${
             val agg = filter.aggComparation.get
-            if (agg != "count")
-              s"$agg(measure) AS ${agg}_agg "
-            else  s"$agg(*) AS ${agg}_agg "
+            s"$agg(measure) AS ${agg}_agg "
           } FROM $datasource $whereClausule)"
       }
       else{
@@ -120,29 +115,8 @@ case class SubsequenceQuery(subsequence: List[BigDecimal],
                             normalization: Boolean = true,
                             equality: Boolean = true)
 
-object OrderFieldType extends ExtendedEnum {
-  type OrderFieldType = Value
-  val measure_name = Value("measure_name")
-  val unit = Value("unit")
-  val measure_desc = Value("measure_desc")
-  val name = Value("name")
-  val city = Value("city")
-  val region = Value("region")
-  val country = Value("country")
-  val address = Value("address")
-  val description = Value("description")
-  val sampling_unit = Value("sampling_unit")
-  val sampling_freq = Value("sampling_freq")
-}
 
-/**
- * Object stablishing an order
- * @param field field to order
- * @param asc true for ascending, false for descending
- */
-case class Order(field: String, asc: Boolean = true){
-  val FieldType = OrderFieldType.withName(field)
-}
+
 
 
 
@@ -176,9 +150,8 @@ object AggregationType extends ExtendedEnum {
   val sum = Value("sum")
   val max = Value("max")
   val min = Value("min")
-  val count = Value("count")
-
 }
+
 object RelationType extends ExtendedEnum {
   type RelationType = Value
   val eq = Value("=")

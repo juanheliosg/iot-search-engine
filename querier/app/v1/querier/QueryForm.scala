@@ -20,7 +20,8 @@ object QueryForm {
       true
     }
     catch {
-      case _: Throwable => false
+      case _: Throwable =>
+        false
     }
   }
 
@@ -29,8 +30,8 @@ object QueryForm {
       "limit" -> number(min=0),
       "timeRange" -> list(
           tuple(
-            "lower_bound" -> nonEmptyText.verifying("Date is not in ISO format",isISO(_)),
-            "upper_bound" -> nonEmptyText.verifying("Date is not in ISO format",isISO(_))
+            "lowerBound" -> nonEmptyText.verifying("Date is not in ISO format",isISO(_)),
+            "upperBound" -> nonEmptyText.verifying("Date is not in ISO format",isISO(_))
           )
         ).verifying("Empty time range list",_.nonEmpty),
       "type" -> nonEmptyText.verifying("Invalid query type", QueryType.isType(_)),
@@ -58,14 +59,7 @@ object QueryForm {
       ),
       "tendencyQuery" -> optional(text.verifying(
                           "Invalid tendency query",
-                                 tend => tend == "asc" || tend == "desc")),
-      "order" -> optional(
-                      list(
-                        mapping(
-                          "field" -> nonEmptyText.verifying(OrderFieldType.isType(_)),
-                          "asc" -> default(boolean, true)
-                        ) (Order.apply)(Order.unapply)
-                      ))
+                                 tend => tend == "asc" || tend == "desc"))
     )(Query.apply)(Query.unapply)
   )
 
