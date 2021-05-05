@@ -25,8 +25,8 @@ import java.time.LocalDateTime
  * @param stats statistical information about the serie (average, standard deviation...)
  * @param subsequences list of subsequences which are significant to the query
  */
-case class QueryResponse(
-                          seriesId: String,
+
+case class QueryResponse(seriesId: String,
                           sourceName: String,
                           sensorId: String,
                           description: String,

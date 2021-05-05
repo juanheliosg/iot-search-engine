@@ -1,5 +1,5 @@
 import sbt._
-import play.sbt.PlayImport.{clusterSharding, guice, ws}
+import play.sbt.PlayImport.{clusterSharding, ehcache, guice, ws}
 
 object Dependencies{
    val scalaTestVersion = "3.2.5"
@@ -46,6 +46,7 @@ object Dependencies{
       akkaKafka, akkaStreams, alpakkaJSON, akkaSerialization, sprayJson,
       kafkaClient, kafkaTestContainers % Test, cassandraTestContainer % Test)
 
-   val querierDeps = Seq(playScalaTest % Test, ws)
+   val querierDeps = Seq(playScalaTest % Test,mockitoScala % Test,
+      ws, ehcache)
 
 }
