@@ -104,6 +104,16 @@ class ExtractorActorTest extends ScalaTestWithActorTestKit(ExtractorTestSpec.con
     }
     result
   }
+  def waitUntilFail = {
+    var result = eventSourcedTestKit.runCommand[StatusReply[Status]]( ref => ExtractorGuardianEntity.getStatus(ref))
+    var hasFailed = result.reply.getValue.status != "error"
+    while (hasFailed){
+      result = eventSourcedTestKit.runCommand[StatusReply[Status]]( ref => ExtractorGuardianEntity.getStatus(ref))
+      hasFailed = result.reply.getValue.status != "error"
+    }
+    result
+
+  }
 
   "Guardian extractor actor" must  {
     "be created with empty state" in{
@@ -193,8 +203,8 @@ class ExtractorActorTest extends ScalaTestWithActorTestKit(ExtractorTestSpec.con
       result.stateOfType[ExtractorGuardianEntity.FailedExtractor].state shouldBe "error"
       val result2 = eventSourcedTestKit.runCommand[StatusReply[Done]](ref => ExtractorGuardianEntity.startExtractor(ref))
       result2.stateOfType[ExtractorGuardianEntity.StartingExtractor].state shouldBe "starting"
-
     }
+
 
     "handle stopExtractor passing to stopped state and then restarting again" in {
       eventSourcedTestKit.runCommand[StatusReply[Summary]](ref => ExtractorGuardianEntity.updateExtractor(extData, ref))

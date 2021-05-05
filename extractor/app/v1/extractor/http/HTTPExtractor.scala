@@ -10,8 +10,8 @@ import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.Producer
 import akka.stream.alpakka.json.scaladsl.JsonReader
 import akka.stream.scaladsl.Framing.FramingException
-import akka.stream.scaladsl.{JsonFraming, Keep, Source}
-import akka.stream.{KillSwitch, KillSwitches}
+import akka.stream.scaladsl.{JsonFraming, Keep, RestartSource, Sink, Source}
+import akka.stream.{KillSwitch, KillSwitches, RestartSettings}
 import akka.util.ByteString
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
@@ -25,8 +25,8 @@ import v1.extractor.actors.{Extractor, PlayActorConfig}
 import v1.extractor.models.extractor.{DataSchema, ExtractorState, MeasureField}
 import v1.extractor.models.metadata.Metadata
 
-import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
+import java.time.{ZoneId, ZonedDateTime}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.{DurationInt, FiniteDuration, MILLISECONDS}
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -110,7 +110,7 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
   }
 
   def createRow(entityID :String, measureIDString: String, sensorID: String, timestamp:String, measure: Double, measure_index: Int,
-                measure_data: MeasureField, latValue: String, longValue: String) = {
+                measure_data: MeasureField, latValue: String, longValue: String): JsObject = {
     JsObject(
       Map(
         "seriesID" -> new JsString(DataSchema.composeUniqueSerieID(entityID, measureIDString, sensorID)),
@@ -141,10 +141,9 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
         val time: ZonedDateTime = ZonedDateTime.parse(date)
         time.withZoneSameInstant(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
       }catch{
-        case _ => {
+        case _ =>
           //Si no tiene zona horaria no podemos tener ninguna fuente de verdad clara y por tanto tomamos el tiempo actual.
           ZonedDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        }
       }
     }
   }
@@ -245,16 +244,38 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
     val httpRequest = HttpRequest(uri = inputConfig.address)
     val duration = new FiniteDuration(httpConfig.freq, MILLISECONDS) //hardcoded milliseconds
 
+    val restartSettings = RestartSettings(
+      minBackoff = 1.second,
+      maxBackoff = 60.second,
+      randomFactor = 0.2
+    ).withMaxRestarts(20, 5.minute)
+
+    /**
+     * Internal stream for managing external  connections
+     * @param httpRequest request for streaming
+     * @return
+     */
+    def getHttpResponse(httpRequest: HttpRequest): Future[HttpResponse] = {
+      RestartSource.withBackoff(restartSettings){ () =>
+        val response = Http()(actorSystem).singleRequest(httpRequest)
+        Source.future(response)
+      }
+        .runWith(Sink.head)
+        .recover {
+          case e =>
+            throw e
+        }
+    }
+
     val (killSwitch, future): (KillSwitch, Future[Done]) =
       Source
         .tick(1.seconds, duration, httpRequest)
-        .mapAsync(1)(
-          Http()(actorSystem).singleRequest(_))
+        .mapAsync(parallelism=4)(getHttpResponse)
         .flatMapConcat(extractEntityData(_, supervisor))
         .via(JsonReader.select(httpConfig.jsonPath))
         .via(JsonFraming.objectScanner(playConfig.config.get[Int]("extractor.max-sensor-per-extractor")))
         .map(_.utf8String)
-        .mapConcat(str => parseJSON(entityID, str, extData.schema))
+        .mapConcat(str => parseRecursiveJSON(entityID, str, extData.schema))
         .map(value => injectMetadata(value, extData.metadata))
         .map(_.compactPrint)
         .map(elem => new ProducerRecord[String, String](kafkaConfig.topic, elem))
@@ -276,6 +297,7 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
         .toMat(Producer.plainSink(producerSettings))(Keep.both)
         .run()
 
+
     future.recover{
       case e =>
         supervisor ! StreamError(s"${e.getMessage}")
@@ -283,6 +305,7 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
 
   //Stream future is never completed because of tick so
     //we wait until first tick is done and then
+
     val completeFuture = Future{TimeUnit.SECONDS.sleep(
       playConfig.config.get[Long]("extractor.timeout-seconds")
     )}
