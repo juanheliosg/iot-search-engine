@@ -25,6 +25,8 @@ import v1.extractor.actors.{Extractor, PlayActorConfig}
 import v1.extractor.models.extractor.{DataSchema, ExtractorState, MeasureField}
 import v1.extractor.models.metadata.Metadata
 
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.{DurationInt, FiniteDuration, MILLISECONDS}
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -126,6 +128,28 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
   }
 
   /**
+   * Convert a date to UTC timestamp string if is not in that format
+   * @param date
+   * @return
+   */
+  def toUTC(date: String): String = {
+    if (date.tail == "Z"){ //timestmap is with UTC timestamp
+      date
+    }
+    else{
+      try{
+        val time: ZonedDateTime = ZonedDateTime.parse(date)
+        time.withZoneSameInstant(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      }catch{
+        case _ => {
+          //Si no tiene zona horaria no podemos tener ninguna fuente de verdad clara y por tanto tomamos el tiempo actual.
+          ZonedDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        }
+      }
+    }
+  }
+
+  /**
    * Create a Json Measure from the original source schema using recursive lookup
    *
    * The json measure contains the following fields:
@@ -159,6 +183,7 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
       val measureIDString = index.toString
       val strMeasure = (jsonMeasures \\ measure.field).head.asOpt[String]
       val timestamp = (jsonMeasures \\ dataSchema.timestampField).head.as[String]
+      val utcTimestamp = toUTC(timestamp)
 
       if (strMeasure.isEmpty) {
         val numbMeasure = (jsonMeasures \\ measure.field).head.asOpt[Double]
@@ -166,13 +191,13 @@ case object HTTPExtractor extends ExtractionActivity with DefaultJsonProtocol {
           None
         else{
           Some(
-            createRow(entityID,measureIDString,sensorID,timestamp,numbMeasure.get,index,measure,latValue, longValue)
+            createRow(entityID,measureIDString,sensorID,utcTimestamp,numbMeasure.get,index,measure,latValue, longValue)
           )
         }
       } else {
         if (strMeasure.get != ""){
           Some(
-            createRow(entityID,measureIDString,sensorID,timestamp,strMeasure.get.toDouble,index,measure,latValue, longValue)
+            createRow(entityID,measureIDString,sensorID,utcTimestamp,strMeasure.get.toDouble,index,measure,latValue, longValue)
           )
         }
         else

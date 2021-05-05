@@ -5,6 +5,8 @@ import v1.extractor.http.HTTPExtractor
 import v1.extractor.models.extractor.DataSchema
 import v1.extractor.models.extractor.{DataSchema, MeasureField}
 
+import java.time.LocalDate
+
 class HTTPExtractorTest extends AnyWordSpec {
 
 
@@ -51,6 +53,7 @@ class HTTPExtractorTest extends AnyWordSpec {
       }
     }
   "JSON recursive parse" must {
+
     "work correctly for nested structures" in {
       val rawSensorData =
       """
@@ -66,10 +69,10 @@ class HTTPExtractorTest extends AnyWordSpec {
         },
         "properties": {
           "nombre": "07012",
-          "startDate": "2021-05-05T12:15:00",
+          "startDate": "2021-05-05T12:15:00Z",
           "volume": 101,
           "load": 37.667,
-          "endDate": "2021-05-05T12:30:00",
+          "endDate": "2021-05-05T12:30:00Z",
           "tipo_inventario": "MS",
           "proveedor": "OPTIMUS",
           "occupancy": "",
@@ -79,12 +82,14 @@ class HTTPExtractorTest extends AnyWordSpec {
 
       val nestedSchema = new DataSchema("id", "endDate",
         List(new MeasureField("ocupation","occupancy","veh/h",Some("Vehículos por hora sobre una espiga")),
-        new MeasureField("load", "load","%",None)))
+          new MeasureField("load", "load","%",None)))
       val result = HTTPExtractor.parseRecursiveJSON("1",rawSensorData,nestedSchema)
-      println(result)
-      val expectedResult = "{\"measure\":37.667,\"sourceID\":\"1\",\"timestamp\":\"2021-05-05T12:30:00\",\"measure_desc\":\"\",\"measureID\":1,\"measure_name\":\"load\",\"long\":\"\",\"sensorID\":\"07012\",\"unit\":\"%\",\"seriesID\":\"1107012\",\"lat\":\"\"}"
+      val expectedResult = "{\"measure\":37.667,\"sourceID\":\"1\",\"timestamp\":\"2021-05-05T12:30:00Z\",\"measure_desc\":\"\",\"measureID\":1,\"measure_name\":\"load\",\"long\":\"\",\"sensorID\":\"07012\",\"unit\":\"%\",\"seriesID\":\"1107012\",\"lat\":\"\"}"
       assert(result(0).toString() == expectedResult)
-
+    }
+    "process non UTC time zones" in {
+      assert(HTTPExtractor.toUTC("2019-09-07T15:50-04:00") == "2019-09-07T19:50:00Z")
+      assert(HTTPExtractor.toUTC("2001-05-05T17:41") != "2001-05-05T17:41")
     }
   }
 
