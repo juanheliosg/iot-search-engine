@@ -62,7 +62,6 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
                   ))
                 }
                 )
-
               case Right(error) =>
                 Future {
                   BadRequest(JSONError.format(error))
@@ -71,6 +70,32 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
         }
       }
     )
+  }
+  }
+  def getTags: Action[AnyContent] = Action.async{ implicit request => {
+    druidApi.getTags.flatMap{
+      case Left(rawTags) =>
+        Future{
+          Ok(Json.arr(rawTags))
+        }
+      case Right(error) =>
+        Future {
+          BadRequest(JSONError.format(error))
+        }
+    }
+  }
+  }
+  def getNames: Action[AnyContent] = Action.async{ implicit request => {
+    druidApi.getNames.flatMap{
+      case Left(rawTags) =>
+        Future{
+          Ok(Json.arr(rawTags))
+        }
+      case Right(error) =>
+        Future {
+          BadRequest(JSONError.format(error))
+        }
+    }
   }
   }
 
