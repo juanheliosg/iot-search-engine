@@ -151,6 +151,12 @@ services:
       - ./extractor/resources/cassandra_schema.cql:/schema.cql
     command: /bin/bash -c "echo loading cassandra keyspace && cqlsh cassandra -f /schema.cql"
 
+  tsanalysis:
+    container_name: tsanalysis
+    image: tsanalysis:latest
+    ports:
+      - 80:9000
+
   extractor-seed:
     container_name: extractor-seed
     image: iot-se-extractor:latest
