@@ -347,7 +347,7 @@ class DruidAPIManagerTest extends PlaySpec
         case Left(_) =>
           fail()
         case Right(value) =>{
-          value.error mustBe "Json parsing error"
+          value(0).error mustBe "Json parsing error"
         }
       }
 
@@ -381,7 +381,7 @@ class DruidAPIManagerTest extends PlaySpec
         case Left(_) =>
           fail()
         case Right(value) =>{
-          value.error mustBe "SQL parsing error"
+          value(0).error mustBe "SQL parsing error"
         }
       }
     }

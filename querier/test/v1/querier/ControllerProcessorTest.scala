@@ -17,7 +17,8 @@ class ControllerProcessorTest extends PlaySpec
   implicit val executor =  scala.concurrent.ExecutionContext.global
 
   val mockDruidApi = mock[DruidAPIManager]
-  val controller: QuerierController = new QuerierController(Helpers.stubControllerComponents(),mockDruidApi)
+  val mockTsApi = mock[TsAnalysisManager]
+  val controller: QuerierController = new QuerierController(Helpers.stubControllerComponents(),mockDruidApi, mockTsApi)
   val controllerSpy: QuerierController = spy(controller)
   val query: Query = Query(100,List(("2021-05-04T19:00:29Z","2021-05-04T19:00:29Z")),"simple","tags='smartcity'")
   val jsonQuery: JsObject = Json.obj(

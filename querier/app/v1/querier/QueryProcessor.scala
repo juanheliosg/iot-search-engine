@@ -1,9 +1,8 @@
 package v1.querier
 
-import play.api.libs.json.{JsObject, Json}
-import v1.querier.models.{Point, Query, QueryResponse, Series}
+import v1.querier.models.QueryResponse
 
-import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
+import java.time.ZonedDateTime
 import scala.concurrent.{ExecutionContext, Future}
 
 object QueryProcessor{
@@ -24,50 +23,66 @@ object QueryProcessor{
     stats.result()
   }
 
+  def arrangeQueryResponse(seriesIdMap: (String, List[DruidRecord]) ): QueryResponse = {
+    val seriesId = seriesIdMap._1
+    val recordList = seriesIdMap._2
+
+    val firstRecord = recordList.head
+
+    val stats = composeStats(firstRecord)
+
+    val series = recordList.map(point =>
+    (point.measure, ZonedDateTime.parse(point.__time)))
+    .sortWith((first, second) => //sort using unix epoch
+    first._2.toEpochSecond < second._2.toEpochSecond
+    ).toArray
+
+    val timestamps = series.map(_._2.toString)
+    val values = series.map(_._1)
+
+    QueryResponse(
+    seriesId,
+    firstRecord.name,
+    firstRecord.sensorID,
+    firstRecord.description,
+    firstRecord.city,
+    firstRecord.region,
+    firstRecord.country,
+    firstRecord.address,
+    firstRecord.sampling_unit,
+    firstRecord.sampling_freq,
+    firstRecord.measure_name,
+    firstRecord.unit,
+    firstRecord.measure_desc,
+    firstRecord.tags,
+    firstRecord.coordinates,
+    timestamps,
+    values,
+    stats
+    )
+  }
+
   /**
    * Returns a query response object from an SQL query
    * @param rawRecords list of raw druid records to be transformed
    */
-  def arrangeQuery(rawRecords: Future[List[DruidRecord]])(implicit ec: ExecutionContext): Future[List[QueryResponse]] = {
+  def arrangeQuery(rawRecords: List[DruidRecord])(implicit ec: ExecutionContext): List[QueryResponse] = {
+    rawRecords.groupBy(_.seriesID).map( f = seriesIdMap => {
+      arrangeQueryResponse(seriesIdMap)
+    }
+    ).toList
+  }
 
-    rawRecords.map(rawList => rawList.groupBy(_.seriesID)
-      .map( f = seriesIdMap => {
-
-        val seriesId = seriesIdMap._1
-        val recordList = seriesIdMap._2
-
-        val firstRecord = recordList(0)
-
-        val stats = composeStats(firstRecord)
-
-        val series = recordList.map(point =>
-          Point(point.measure, ZonedDateTime.parse(point.__time))
-        ).sortWith((first, second) => //sort using unix epoch
-          first.timestamp.toEpochSecond < second.timestamp.toEpochSecond
-        ).toArray
-
-        QueryResponse(
-          seriesId,
-          firstRecord.name,
-          firstRecord.sensorID,
-          firstRecord.description,
-          firstRecord.city,
-          firstRecord.region,
-          firstRecord.country,
-          firstRecord.address,
-          firstRecord.sampling_unit,
-          firstRecord.sampling_freq,
-          firstRecord.measure_name,
-          firstRecord.unit,
-          firstRecord.measure_desc,
-          firstRecord.tags,
-          firstRecord.coordinates,
-          Series(series),
-          stats
-        )
-      }
-    ).toList)
-
+  /**
+   * Returns a query response object from an SQL query
+   * @param rawRecords list of raw druid records to be transformed
+   */
+  def arrangeMapQueryResponse(rawRecords: List[DruidRecord])(implicit ec: ExecutionContext): Map[String,QueryResponse] = {
+    val seriesIdResponse = collection.mutable.Map[String,QueryResponse]()
+    rawRecords.groupBy(_.seriesID).foreach( f = seriesIdMap => {
+      seriesIdResponse +=(seriesIdMap._1 -> arrangeQueryResponse(seriesIdMap))
+    })
+    seriesIdResponse.toMap
   }
 
 }
