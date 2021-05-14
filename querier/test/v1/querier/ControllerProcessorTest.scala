@@ -20,7 +20,7 @@ class ControllerProcessorTest extends PlaySpec
   val mockTsApi = mock[TsAnalysisManager]
   val controller: QuerierController = new QuerierController(Helpers.stubControllerComponents(),mockDruidApi, mockTsApi)
   val controllerSpy: QuerierController = spy(controller)
-  val query: Query = Query(100,List(("2021-05-04T19:00:29Z","2021-05-04T19:00:29Z")),"simple","tags='smartcity'")
+  val query: Query = Query(100,List(("2021-05-04T19:00:29Z","2021-05-04T19:00:29Z")),true,"simple","tags='smartcity'")
   val jsonQuery: JsObject = Json.obj(
     "limit" -> 100,
     "timeRange" -> Json.arr(

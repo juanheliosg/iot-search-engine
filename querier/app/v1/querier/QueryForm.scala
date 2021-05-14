@@ -34,6 +34,7 @@ object QueryForm {
             "upperBound" -> nonEmptyText.verifying("Date is not in ISO format",isISO(_))
           )
         ).verifying("Empty time range list",_.nonEmpty),
+      "timeseries"-> default(boolean,true),
       "type" -> nonEmptyText.verifying("Invalid query type", QueryType.isType(_)),
       "filter" -> text,
       "subsequenceQuery" -> optional(
@@ -60,7 +61,7 @@ object QueryForm {
       "tendencyQuery" -> optional(text.verifying(
                           "Invalid tendency query",
                                  tend => tend == "asc" || tend == "desc"))
-    )(Query.apply)(Query.unapply)
+    )(Query.apply)(Query.unapply).verifying("Complex queries must have timeseries set to true",q => q.subseQuery.isEmpty == q.timeseries)
   )
 
 }

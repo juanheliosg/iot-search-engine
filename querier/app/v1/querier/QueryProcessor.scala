@@ -23,7 +23,7 @@ object QueryProcessor{
     stats.result()
   }
 
-  def arrangeQueryResponse(seriesIdMap: (String, List[DruidRecord]) ): QueryResponse = {
+  def arrangeQueryResponse(seriesIdMap: (String, List[DruidRecord]), timeseries: Boolean): QueryResponse = {
     val seriesId = seriesIdMap._1
     val recordList = seriesIdMap._2
 
@@ -31,14 +31,28 @@ object QueryProcessor{
 
     val stats = composeStats(firstRecord)
 
-    val series = recordList.map(point =>
-    (point.measure, ZonedDateTime.parse(point.__time)))
-    .sortWith((first, second) => //sort using unix epoch
-    first._2.toEpochSecond < second._2.toEpochSecond
-    ).toArray
 
-    val timestamps = series.map(_._2.toString)
-    val values = series.map(_._1)
+    val series = timeseries match {
+      case true =>
+        recordList.map(point =>
+          (point.measure, ZonedDateTime.parse(point.__time)))
+          .sortWith((first, second) => //sort using unix epoch
+            first._2.toEpochSecond < second._2.toEpochSecond
+          ).toArray
+      case false =>  Array.empty
+    }
+
+    val timestamps =
+      if (series.isEmpty)
+        Array.empty
+      else
+        series.map(_._2.toString)
+
+    val values =
+        if (series.isEmpty)
+          Array.empty
+        else
+          series.map(_._1)
 
     QueryResponse(
     seriesId,
@@ -66,9 +80,9 @@ object QueryProcessor{
    * Returns a query response object from an SQL query
    * @param rawRecords list of raw druid records to be transformed
    */
-  def arrangeQuery(rawRecords: List[DruidRecord])(implicit ec: ExecutionContext): List[QueryResponse] = {
+  def arrangeQuery(rawRecords: List[DruidRecord],timeseries: Boolean)(implicit ec: ExecutionContext): List[QueryResponse] = {
     rawRecords.groupBy(_.seriesID).map( f = seriesIdMap => {
-      arrangeQueryResponse(seriesIdMap)
+      arrangeQueryResponse(seriesIdMap,timeseries)
     }
     ).toList
   }
@@ -77,10 +91,10 @@ object QueryProcessor{
    * Returns a query response object from an SQL query
    * @param rawRecords list of raw druid records to be transformed
    */
-  def arrangeMapQueryResponse(rawRecords: List[DruidRecord])(implicit ec: ExecutionContext): Map[String,QueryResponse] = {
+  def arrangeMapQueryResponse(rawRecords: List[DruidRecord], timeseries: Boolean)(implicit ec: ExecutionContext): Map[String,QueryResponse] = {
     val seriesIdResponse = collection.mutable.Map[String,QueryResponse]()
     rawRecords.groupBy(_.seriesID).foreach( f = seriesIdMap => {
-      seriesIdResponse +=(seriesIdMap._1 -> arrangeQueryResponse(seriesIdMap))
+      seriesIdResponse +=(seriesIdMap._1 -> arrangeQueryResponse(seriesIdMap,timeseries))
     })
     seriesIdResponse.toMap
   }

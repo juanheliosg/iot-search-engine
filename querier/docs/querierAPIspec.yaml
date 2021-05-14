@@ -104,6 +104,9 @@ components:
         limit:
           type: number
           description: Numero de entradas de búsqueda a ser resueltas.
+        timeseries:
+          type: boolean
+          description: Verdadero para devolver las series temporales falso para solo los metadatos. Por defecto es falso
         timeRange:
           type: array
           description: Intervalos con limite inferior y superior de horas en formato ISO con tiempo UTC

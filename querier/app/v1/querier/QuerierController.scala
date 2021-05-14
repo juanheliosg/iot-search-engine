@@ -43,7 +43,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
       val rawRecords = getRawRecords(query)
       rawRecords.flatMap{
         case Left(rawRecords) =>
-          val queryResponseMap = QueryProcessor.arrangeMapQueryResponse(rawRecords)
+          val queryResponseMap = QueryProcessor.arrangeMapQueryResponse(rawRecords,query.timeseries)
           val subseqResults = tsAPI.searchSubsequence(queryResponseMap.toList,subseQuery.subsequence)
           val result = subseqResults.map{
             case Left(subseq) =>
@@ -99,7 +99,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
             val rawResponseFuture = getRawRecords(query)
             rawResponseFuture.map{
               case Left(rawRecords) =>
-                val queryResponseList = QueryProcessor.arrangeQuery(rawRecords)
+                val queryResponseList = QueryProcessor.arrangeQuery(rawRecords, query.timeseries)
                 val finalList = queryResponseList.take(query.limit)
                 Ok(Json.obj(
                   "items" -> finalList.size,
@@ -130,9 +130,9 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
   def getNames: Action[AnyContent] = Action.async{ implicit request => {
     logger.trace(s"Getting names from request with id ${request.id}")
     druidApi.getNames.flatMap{
-      case Left(rawTags) =>
+      case Left(rawNames) =>
         Future{
-          Ok(Json.arr(rawTags))
+          Ok(Json.arr(rawNames))
         }
       case Right(error) =>
         Future {

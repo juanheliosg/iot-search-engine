@@ -13,15 +13,16 @@ object Query{
  * Query to be submited to the system
  *
  * @param limit number of elements to be retrieved
+ * @param timeseries true for returning the time series values, false for just the series metadata
  * @param timeRanges list of time ranges en ISO format to be considered
  * @param query type of query can be simple, aggregation and complex
  * @param filter SQL Where clause to filter
  * @param subseQuery Subsequence to be search in the database
  * @param aggregationFilter List of aggregations filters
  * @param tendencyQuery take value asc for filter sensors with ascending series
- * @param order Order the final result using the Order objects in order.
  */
 case class Query(limit: Int, timeRanges: List[(String, String)],
+                 timeseries: Boolean = false,
                  query: String, filter: String,
                  subseQuery: Option[SubsequenceQuery] = None,
                  aggregationFilter: Option[List[AggregationFilter]] = None,
@@ -46,7 +47,14 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
    * @return
    */
   def composeBasicQuery: String = {
-    s"SELECT * FROM $datasource ${composeWhere()} ORDER BY __time"
+    if (timeseries){
+      s"SELECT * FROM $datasource ${composeWhere()} ORDER BY __time"
+    }
+    else{
+      s"SELECT seriesID, sensorID, address, city, country, description, " +
+        "measure_desc, measure_name, name, region, sampling_unit," +
+        s" tags, unit FROM $datasource ${composeWhere()} GROUP BY seriesID"
+    }
   }
 
   /**
@@ -59,10 +67,15 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
     val aggResults = aggFilter.map(agg => s" ${agg.aggreg}_agg ").toSet.mkString(",")
     val whereClausule = composeWhere()
 
-    val selection =
-      s"SELECT seriesID, sensorID, __time, address, city, country, description, " +
+    val selection = timeseries match{
+      case true =>  s"SELECT seriesID, sensorID, __time, address, city, country, description, " +
         "measure, measure_desc, measure_name, name, region, sampling_unit," +
         s" tags, unit, $aggResults FROM "
+      case false => s"SELECT seriesID, sensorID, address, city, country, description, " +
+        "measure_desc, measure_name, name, region, sampling_unit," +
+        s" tags, unit, $aggResults FROM "
+    }
+
 
     val aggComputation = aggFilter.map( filter =>{
         val agg = filter.aggreg
@@ -86,13 +99,24 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
       }
     }).filter(_ != Nil).mkString(" AND ")
 
-
-    s"$selection (SELECT * FROM $datasource $whereClausule )" +
-      s" INNER JOIN" +
-      s"(SELECT seriesID as seriesID2, $aggResults FROM " +
+    if (timeseries){
+      s"$selection (SELECT * FROM $datasource $whereClausule )" +
+        s" INNER JOIN" +
+        s"(SELECT seriesID as seriesID2, $aggResults FROM " +
         s"(SELECT DISTINCT(seriesID), $aggComputation FROM $datasource" +
         s"$whereClausule GROUP BY 1 HAVING $havingClausule))" +
-      s"ON seriesID = seriesID2 ORDER BY __time"
+        s"ON seriesID = seriesID2 ORDER BY __time"
+    }
+    else{
+      s"$selection (SELECT * FROM $datasource $whereClausule )" +
+        s" INNER JOIN" +
+        s"(SELECT seriesID as seriesID2, $aggResults FROM " +
+        s"(SELECT DISTINCT(seriesID), $aggComputation FROM $datasource" +
+        s"$whereClausule GROUP BY 1 HAVING $havingClausule))" +
+        s"ON seriesID = seriesID2 GROUP BY seriesID"
+
+    }
+
 
   }
 }
