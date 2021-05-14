@@ -80,11 +80,19 @@ class DruidAPIManager @Inject() (config: Configuration, ws: WSClient, implicit v
     )
     postGeneralQuery[DruidRecord, DruidError](data, request, JSONError.toErrorList)(DruidRecord.druidReader, ec, DruidError.JSONErrorReader)
   }
-  def getTags: Future[Either[List[DruidCountField], List[JSONError]]] = {
+
+  /**
+   * Get a row with field and number of rows with that value
+   * @param field
+   * @return
+   */
+  def getCountField(field: String):Future[Either[List[DruidCountField], List[JSONError]]] = {
     val data = Json.obj(
-      "query" -> s"SELECT DISTINCT(TAGS), COUNT(*) FROM $datasource"
+      "query" -> s"SELECT DISTINCT(sensorID) , $field, COUNT(*) FROM $datasource GROUP BY $field"
     )
     postGeneralQuery[DruidCountField,DruidError](data, request, JSONError.toErrorList)(DruidCountField.druidGeneralReads,ec, DruidError.JSONErrorReader)
+
+
   }
 
   def getNames: Future[Either[List[DruidCountField], List[JSONError]]] = {

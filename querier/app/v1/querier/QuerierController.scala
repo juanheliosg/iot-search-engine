@@ -113,9 +113,9 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
     )
   }
   }
-  def getTags: Action[AnyContent] = Action.async{ implicit request => {
-    logger.trace(s"Getting tags for request with id ${request.id}")
-    druidApi.getTags.flatMap{
+
+  private def getFieldCount(field: String): Future[Result] = {
+    druidApi.getRecords(field).flatMap{
       case Left(rawTags) =>
         Future{
           Ok(Json.arr(rawTags))
@@ -126,19 +126,45 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
         }
     }
   }
+  def getTags: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting tags for request with id ${request.id}")
+    getFieldCount("tags")
+  }
   }
   def getNames: Action[AnyContent] = Action.async{ implicit request => {
-    logger.trace(s"Getting names from request with id ${request.id}")
-    druidApi.getNames.flatMap{
-      case Left(rawNames) =>
-        Future{
-          Ok(Json.arr(rawNames))
-        }
-      case Right(error) =>
-        Future {
-          BadRequest(JSONError.format(error))
-        }
-    }
+    logger.trace(s"Getting measure names from request with id ${request.id}")
+    getFieldCount("measure_name")
+  }
+  }
+  def getMeasuresName: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting measure names from request with id ${request.id}")
+    getFieldCount("measure_name")
+  }
+  }
+  def getMeasuresUnit: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting measures units from request with id ${request.id}")
+    getFieldCount("unit")
+  }
+  }
+
+  def getSamplingUnits: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting sampling_units from request with id ${request.id}")
+    getFieldCount("sampling_unit")
+  }
+  }
+  def getCities: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting cities from request with id ${request.id}")
+    getFieldCount("city")
+  }
+  }
+  def getRegions: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting regions from request with id ${request.id}")
+    getFieldCount("region")
+  }
+  }
+  def getCountries: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting countries from request with id ${request.id}")
+    getFieldCount("country")
   }
   }
 
