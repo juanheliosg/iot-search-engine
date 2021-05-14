@@ -51,9 +51,9 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
       s"SELECT * FROM $datasource ${composeWhere()} ORDER BY __time"
     }
     else{
-      s"SELECT seriesID, sensorID, address, city, country, description, " +
+      s"SELECT DISTINCT(seriesID), sensorID, address, city, country, description, " +
         "measure_desc, measure_name, name, region, sampling_unit," +
-        s" tags, unit FROM $datasource ${composeWhere()} GROUP BY seriesID"
+        s" tags, unit FROM $datasource ${composeWhere()}"
     }
   }
 
@@ -71,7 +71,7 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
       case true =>  s"SELECT seriesID, sensorID, __time, address, city, country, description, " +
         "measure, measure_desc, measure_name, name, region, sampling_unit," +
         s" tags, unit, $aggResults FROM "
-      case false => s"SELECT seriesID, sensorID, address, city, country, description, " +
+      case false => s"SELECT DISTINCT(seriesID), sensorID, address, city, country, description, " +
         "measure_desc, measure_name, name, region, sampling_unit," +
         s" tags, unit, $aggResults FROM "
     }
@@ -113,7 +113,7 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
         s"(SELECT seriesID as seriesID2, $aggResults FROM " +
         s"(SELECT DISTINCT(seriesID), $aggComputation FROM $datasource" +
         s"$whereClausule GROUP BY 1 HAVING $havingClausule))" +
-        s"ON seriesID = seriesID2 GROUP BY seriesID"
+        s"ON seriesID = seriesID2"
 
     }
 
