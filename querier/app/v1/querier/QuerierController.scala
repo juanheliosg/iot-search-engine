@@ -76,7 +76,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
 
   def postQuery: Action[AnyContent] = Action.async{ implicit request => {
 
-    logger.trace(s"Posting extractor from request with id ${request.id}")
+    logger.trace(s"Posting query for request with id ${request.id}")
     QueryForm.form.bindFromRequest().fold(
       formWithErrors => {
         Future{
@@ -114,6 +114,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
   }
   }
   def getTags: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting tags for request with id ${request.id}")
     druidApi.getTags.flatMap{
       case Left(rawTags) =>
         Future{
@@ -127,6 +128,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
   }
   }
   def getNames: Action[AnyContent] = Action.async{ implicit request => {
+    logger.trace(s"Getting names from request with id ${request.id}")
     druidApi.getNames.flatMap{
       case Left(rawTags) =>
         Future{

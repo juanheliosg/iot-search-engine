@@ -14,12 +14,13 @@ tags:
       pueden hacer al sistema
 paths:
   /tags:
-    tags:
-      - query
     get:
+      tags:
+        - query
       summary: Endpoint para recuperar los tags disponibles en el sistema
       responses:
         200:
+          description: Recupera correctamente los tags en el sistema
           content:
             application/json:
               schema:
@@ -34,12 +35,13 @@ paths:
                       type: number
                       description: Numero de series temporales con esta etiqueta
   /names:
-    tags:
-      - query
     get:
+      tags:
+        - query
       summary: Endpoint para recuperar los nombrs de fuentes disponibles en el sistema
       responses:
         200:
+          description: Recupera correctamente los nombres en el sistema
           content:
             application/json:
               schema:
