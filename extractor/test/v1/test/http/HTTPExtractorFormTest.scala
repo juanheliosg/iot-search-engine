@@ -18,6 +18,7 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
   val serviceImplMock: ExtractorServiceImpl = mock[ExtractorServiceImpl]
   val extDataMock = mock[ExtractorFormInput]
   when(serviceImplMock.postExtractor(extDataMock)).thenReturn(Future{Created("Ok")})
+
   val controller = new ExtractorController(Helpers.stubControllerComponents(), serviceImplMock)
 
   val addressJsonPath = "https://run.mocky.io/v3/dec8605f-60b5-4517-bcba-427ac5e316f4"
@@ -305,7 +306,7 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
     }
     "fail if jsonPath is wrong" in {
 
-      val json = Json.obj(
+      val jsonWrong = Json.obj(
         "type" -> "http",
         "dataSchema" -> Json.obj(
           "sensorIDField" -> "ayto:idSensor",
@@ -326,7 +327,7 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
         "IOConfig" -> Json.obj(
           "inputConfig" -> Json.obj(
             "address" -> addressJsonPath,
-            "jsonPath" -> "$",
+            "jsonPath" -> "$98i",
             "freq" -> 1
           ),
           "kafkaConfig" -> Json.obj(
@@ -344,15 +345,16 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
           )
         )
       )
-      val request = FakeRequest(POST, "/v1/extractor")
-        .withJsonBody(json)
+      val correctValidation = ExtractorForm.form.bind(jsonWrong,100000).fold(
+        formWithErrors => {
+          false
+        },
+        extData => {
+          true
+        }
+      )
+      correctValidation mustBe false
 
-      val result: Future[Result] = controller.post.apply(request)
-      val response = contentAsJson(result)
-
-      println(contentAsString(result))
-
-      status(result) mustBe 400
     }
     "work for source with empty measures" in {
       val listWithEmptyMeasures = "https://run.mocky.io/v3/cd86ab12-b66b-4122-9839-c2a41a408ae6"
@@ -564,8 +566,58 @@ class HTTPExtractorFormTest extends PlaySpec with MockitoSugar{
         )
         correctValidation mustBe true
       })
-
-
+    }
+    "work for nested schemas" in {
+      val  nestedAddress = "https://run.mocky.io/v3/46620f75-f8ea-4dc6-b10b-d39ad6323e71"
+      val json = Json.obj(
+        "type" -> "http",
+        "dataSchema" -> Json.obj(
+          "sensorIDField" -> "nombre",
+          "timestampField" -> "endDate",
+          "measures" -> Json.arr(
+            Json.obj(
+              "name"-> "volume",
+              "field" -> "volume",
+              "unit" -> "veh/h"
+            ),
+            Json.obj(
+              "name"-> "intensity",
+              "field" -> "occupancy",
+              "unit" -> "%"
+            ),
+          )
+        ),
+        "IOConfig" -> Json.obj(
+          "inputConfig" -> Json.obj(
+            "address" -> nestedAddress,
+            "jsonPath" -> "$",
+            "freq" -> 1
+          ),
+          "kafkaConfig" -> Json.obj(
+            "topic" -> "test",
+            "server" -> "localhost:9092"
+          )),
+        "metadata" -> Json.obj(
+          "name" -> "vitoria-traffic",
+          "sample" -> Json.obj(
+            "freq" -> "1",
+            "unit" -> "seconds"
+          ),
+          "localization" -> Json.obj(
+            "name" -> "Vitoria"
+          )
+        )
+      )
+      val correctValidation = ExtractorForm.form.bind(json,100000).fold(
+        formWithErrors => {
+          println(formWithErrors.errors)
+          false
+        },
+        extData => {
+          true
+        }
+      )
+      correctValidation mustBe true
     }
 
   }

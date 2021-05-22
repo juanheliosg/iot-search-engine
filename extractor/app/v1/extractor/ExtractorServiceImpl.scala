@@ -319,7 +319,7 @@ class ExtractorServiceImpl @Inject() (val cc: ControllerComponents, val sharding
         if (status.status == "stopped" || status.status == "error"){
             val resultStart = entityRef.askWithStatus(ref => ExtractorGuardianEntity.startExtractor(ref))
             resultStart.transformWith{
-              case Success(_) =>
+              case Success(response) =>
                 Future(Ok(
                   Json.toJson(new ExtractorStatusResponse(
                     id, "starting"

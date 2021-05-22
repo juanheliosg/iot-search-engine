@@ -332,8 +332,6 @@ object ExtractorGuardianEntity{
       cmd match {
         case updateExtractor(extData, replyTo) =>
           updateAndStartExtractorEffect(extData, entityID, state, replyTo, context, playActorConfig)
-        case startExtractor(replyTo) =>
-          Effect.persist(ExtractorBeganStarting).thenReply(replyTo)(_ => StatusReply.Ack)
         case getExtractor(replyTo) => Effect.reply(replyTo)(StatusReply.Success(
           Summary(extractorState,Status(entityID,state))))
         case startExtractor(replyTo) =>

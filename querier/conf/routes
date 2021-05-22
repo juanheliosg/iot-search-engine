@@ -1,0 +1,14 @@
+
+
+POST /v1/query v1.querier.QuerierController.postQuery
+
+GET /v1/tags v1.querier.QuerierController.getTags
+GET /v1/names v1.querier.QuerierController.getNames
+GET /v1/cities v1.querier.QuerierController.getCities
+GET /v1/regions v1.querier.QuerierController.getRegions
+GET /v1/countries v1.querier.QuerierController.getCountries
+GET /v1/sample_units v1.querier.QuerierController.getSamplingUnits
+GET /v1/measure v1.querier.QuerierController.getMeasuresName
+GET /v1/measure_units v1.querier.QuerierController.getMeasuresUnit
+
+GET /docs/ controllers.Assets.at(path="/public",file="index.html")

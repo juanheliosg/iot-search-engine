@@ -2,7 +2,7 @@
 
 #Kafka and Druid based in https://github.com/ramkumarvenkat/kafka-spark-streaming-druid
 #Change passwords for production use
-version: "3"
+version: "2.2"
 
 volumes:
   metadata_data: {}
@@ -11,6 +11,7 @@ volumes:
   broker_var: {}
   coordinator_var: {}
   router_var: {}
+
 
 services:
   # Zookeeper
@@ -49,10 +50,10 @@ services:
       - POSTGRES_DB=druid
 #Druid coordinator
   coordinator:
-    image: apache/druid:0.20.0
+    image: apache/druid:0.21.1-rc1
     container_name: coordinator
     volumes:
-      - ./storage:/opt/data
+      - ./druid_data:/opt/data
       - coordinator_var:/opt/druid/var
     depends_on:
       - zookeeper
@@ -65,7 +66,7 @@ services:
       - druidEnv
 #Druid broker
   broker:
-    image: apache/druid:0.20.0
+    image: apache/druid:0.21.1-rc1
     container_name: broker
     volumes:
       - broker_var:/opt/druid/var
@@ -81,10 +82,10 @@ services:
       - druidEnv
 #Druid historical
   historical:
-    image: apache/druid:0.20.0
+    image: apache/druid:0.21.1-rc1
     container_name: historical
     volumes:
-      - ./storage:/opt/data
+      - ./druid_data:/opt/data
       - historical_var:/opt/druid/var
     depends_on:
       - zookeeper
@@ -98,24 +99,24 @@ services:
       - druidEnv
 #Druid middlemanager
   middlemanager:
-    image: apache/druid:0.20.0
+    image: apache/druid:0.21.1-rc1
     container_name: middlemanager
     volumes:
-      - ./storage:/opt/data
+      - ./druid_data:/opt/data
       - middle_var:/opt/druid/var
     depends_on:
       - zookeeper
       - postgres
       - coordinator
     ports:
-      - "8091:8091"
+      - "8091:8091" 
     command:
       - middleManager
     env_file:
       - druidEnv
 #Druid router
   router:
-    image: apache/druid:0.20.0
+    image: apache/druid:0.21.1-rc1
     container_name: router
     volumes:
       - router_var:/opt/druid/var
@@ -150,6 +151,27 @@ services:
     volumes:
       - ./extractor/resources/cassandra_schema.cql:/schema.cql
     command: /bin/bash -c "echo loading cassandra keyspace && cqlsh cassandra -f /schema.cql"
+
+  tsanalysis:
+    container_name: iot-se-tsanalysis
+    image: tsanalysis:latest
+    ports:
+      - 8666:8666
+    environment:
+      - PORT=8666
+
+  querier:
+    container_name: iot-se-querier
+    image: iot-se-querier:latest
+    ports:
+      - "9000:9000"
+    environment:
+      TSANALYSIS_ENDPOINT: http://iot-se-tsanalysis:8666/
+      DRUID_QUERY_ENDPOINT: http://router:8888/druid/v2/sql 
+      DATASOURCE: tseriesdb 
+    depends_on:
+      - tsanalysis
+      - router
 
   extractor-seed:
     container_name: extractor-seed

@@ -32,23 +32,22 @@ object HttpSchemaValidator extends SchemaValidator{
 
     val schema = extractor.dataSchema
 
-    if (!json.keys.contains(schema.sensorIDField)) {
+    if ( (json \\ schema.sensorIDField).isEmpty) {
       errors.addOne(ValidationError("Can't find sensorID field in JSON"))
     }
     if (schema.longField.nonEmpty && schema.latField.nonEmpty){
-      if ( ! (json.keys.contains(schema.longField.get) && json.keys.contains(schema.latField.get)))
+      if ( (json \\ schema.latField.get).isEmpty || (json \\ schema.latField.get).isEmpty)
         errors.addOne(ValidationError("Cant find lat long fields in JSON"))
     }
-    if (json.keys.contains(schema.timestampField)) {
-      val dateValid = (json \ schema.timestampField).asOpt[String] match{
-        case Some(date) => {
+    if ((json \\ schema.timestampField).nonEmpty) {
+      val dateValid = (json \\ schema.timestampField).head.asOpt[String] match{
+        case Some(date) =>
           try {
             DateTimeFormatter.ISO_DATE_TIME.parse(date)
             true
           }
           catch {
             case _: Throwable => false
-        }
         }
         case _ => false
       }
@@ -59,12 +58,18 @@ object HttpSchemaValidator extends SchemaValidator{
     }
 
     schema.measures.foreach(measure => {
-      if (json.keys.contains(measure.field)) {
-        val measureNumber = (json \ measure.field).validate[String]
+      val measureField = (json \\ measure.field)
+      if (measureField.nonEmpty) {
+        val measureNumber = measureField.head.validate[String]
         if (! measureNumber.contains("")){
           measureNumber.asEither match {
             case Left(numb) =>
-              errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}"))
+              val measureAsDouble = measureField.head.validate[Double]
+              measureAsDouble.asEither match{
+                case Left(value) =>
+                  errors.addOne(ValidationError(s"Number expected but other type found in ${measure.field}"))
+                case Right(value) =>
+              }
             case Right(numb) =>
               val isNotDouble = numb.toDoubleOption.isEmpty
               if (isNotDouble)
@@ -124,6 +129,7 @@ object HttpSchemaValidator extends SchemaValidator{
               case e: JsonParseException =>
                 mutable.Set(ValidationError("Parser failed to read JSON"))
               case e: RuntimeException =>
+                e.printStackTrace()
                 mutable.Set(ValidationError("Source extraction error while parsing JSON (check content type and jsonPath)"))
               case other =>
                 other.printStackTrace()
@@ -131,14 +137,13 @@ object HttpSchemaValidator extends SchemaValidator{
             }
             .runWith(Sink.head)
         }catch{
-          case e: Throwable => {
+          case e: Throwable =>
             e.printStackTrace()
             Future(
               errors.addOne(
                 ValidationError(s"Failure while doing schema mapping ${e.getMessage}")
               )
             )
-          }
         }
 
       } //SOlo toma un elemento
