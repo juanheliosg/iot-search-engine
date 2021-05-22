@@ -166,7 +166,7 @@ services:
     ports:
       - "9000:9000"
     environment:
-      TSANALYSIS_ENDPOINT: http://iot-se-tsanalysis:9000/
+      TSANALYSIS_ENDPOINT: http://iot-se-tsanalysis:8666/
       DRUID_QUERY_ENDPOINT: http://router:8888/druid/v2/sql 
       DATASOURCE: tseriesdb 
     depends_on:
