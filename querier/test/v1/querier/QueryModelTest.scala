@@ -11,10 +11,10 @@ class QueryModelTest extends PlaySpec{
       val basicQuery = new Query(100,List(Tuple2("2021-05-03T08:27:47Z","2021-05-01T08:23:47Z"),
         Tuple2("2021-01-03T08:27:47Z","2021-02-03T08:23:47Z")),true,"simple","tags = 'smartcity'")
 
-      val expectedResult = "SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-01T08:23:47Z') OR (__time >= '2021-01-03T08:27:47Z' AND __time <= '2021-02-03T08:23:47Z') AND tags = 'smartcity' ORDER BY __time"
+      val expectedResult = "SELECT seriesID, sensorID, measure, __time, address, city, country, description, measure_desc, measure_name, name, region, sampling_unit, sampling_freq, tags, unit, lat, long FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-01T08:23:47Z') OR (__time >= '2021-01-03T08:27:47Z' AND __time <= '2021-02-03T08:23:47Z') AND tags = 'smartcity'"
       basicQuery.composeBasicQuery mustBe expectedResult
     }
-    "compose form well formed queries for aggregation queries" in {
+    "compose well formed queries for aggregation queries" in {
       val aggQuery = new Query(
         100,List(Tuple2("2021-05-03T08:27:47Z","2021-05-03T08:23:47Z")),
         true,
@@ -25,9 +25,21 @@ class QueryModelTest extends PlaySpec{
           "avg", aggComparation = Some("stddev"), relation = Some("<=")
         ))))
 
-      val expectedQuery = "SELECT seriesID, sensorID, __time, address, city, country, description, measure, measure_desc, measure_name, name, region, sampling_unit, tags, unit,  avg_agg , min_agg  FROM  (SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' ) INNER JOIN(SELECT seriesID as seriesID2,  avg_agg , min_agg  FROM (SELECT DISTINCT(seriesID), avg(measure) AS avg_agg ,min(measure) AS min_agg  FROM tseriesdb WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' GROUP BY 1 HAVING avg_agg <= 2.0 AND avg_agg <= (SELECT stddev(measure) AS stddev_agg  FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation')))ON seriesID = seriesID2 ORDER BY __time"
+      val expectedQuery = "SELECT seriesID, sensorID, __time, address, city, country, description, measure, measure_desc, measure_name, name, region, sampling_unit, sampling_freq, tags, unit, lat, long,  avg_agg , min_agg  FROM  (SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' ) INNER JOIN(SELECT seriesID as seriesID2,  avg_agg , min_agg  FROM (SELECT DISTINCT(seriesID), avg(measure) AS avg_agg ,min(measure) AS min_agg  FROM tseriesdb WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' GROUP BY 1 HAVING avg_agg <= 2.0 AND  avg_agg <= (SELECT stddev(measure) AS stddev_agg  FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation')))ON seriesID = seriesID2"
       aggQuery.composeAggregationQuery mustBe expectedQuery
     }
+  }
+  "compose well formed queries for single aggregation queries" in {
+    val aggQuery = new Query(
+      100,List(Tuple2("2021-05-03T08:27:47Z","2021-05-03T08:23:47Z")),
+      true,
+      "aggregation", "tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation'",
+      aggregationFilter = Some(List(AggregationFilter("min")
+      )))
+
+
+    val expectedQuery = "SELECT seriesID, sensorID, __time, address, city, country, description, measure, measure_desc, measure_name, name, region, sampling_unit, sampling_freq, tags, unit, lat, long,  min_agg  FROM  (SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' ) INNER JOIN(SELECT seriesID as seriesID2,  min_agg  FROM (SELECT DISTINCT(seriesID), min(measure) AS min_agg  FROM tseriesdb WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' GROUP BY 1 ))ON seriesID = seriesID2"
+    aggQuery.composeAggregationQuery mustBe expectedQuery
   }
 
   "query model without time series values" must {
@@ -35,8 +47,7 @@ class QueryModelTest extends PlaySpec{
       val basicQuery = new Query(100,List(Tuple2("2021-05-03T08:27:47Z","2021-05-01T08:23:47Z"),
         Tuple2("2021-01-03T08:27:47Z","2021-02-03T08:23:47Z")),false,"simple","tags = 'smartcity'")
 
-      println(basicQuery.composeBasicQuery)
-      val expectedResult = "SELECT DISTINCT(seriesID), sensorID, address, city, country, description, measure_desc, measure_name, name, region, sampling_unit, tags, unit FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-01T08:23:47Z') OR (__time >= '2021-01-03T08:27:47Z' AND __time <= '2021-02-03T08:23:47Z') AND tags = 'smartcity'"
+      val expectedResult = "SELECT DISTINCT seriesID, sensorID, address, city, country, description, measure_desc, measure_name, name, region, sampling_unit, sampling_freq, tags, unit, lat, long FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-01T08:23:47Z') OR (__time >= '2021-01-03T08:27:47Z' AND __time <= '2021-02-03T08:23:47Z') AND tags = 'smartcity'"
       basicQuery.composeBasicQuery mustBe expectedResult
     }
     "compose form well formed queries for aggregation queries" in {
@@ -50,8 +61,7 @@ class QueryModelTest extends PlaySpec{
           "avg", aggComparation = Some("stddev"), relation = Some("<=")
         ))))
 
-      println(aggQuery.composeAggregationQuery)
-      val expectedQuery = "SELECT DISTINCT(seriesID), sensorID, address, city, country, description, measure_desc, measure_name, name, region, sampling_unit, tags, unit,  avg_agg , min_agg  FROM  (SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' ) INNER JOIN(SELECT seriesID as seriesID2,  avg_agg , min_agg  FROM (SELECT DISTINCT(seriesID), avg(measure) AS avg_agg ,min(measure) AS min_agg  FROM tseriesdb WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' GROUP BY 1 HAVING avg_agg <= 2.0 AND avg_agg <= (SELECT stddev(measure) AS stddev_agg  FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation')))ON seriesID = seriesID2"
+      val expectedQuery = "SELECT DISTINCT seriesID, sensorID, address, city, country, description, measure_desc, measure_name, name, region, sampling_unit, sampling_freq, tags, unit, lat, long,  avg_agg , min_agg  FROM  (SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' ) INNER JOIN(SELECT seriesID as seriesID2,  avg_agg , min_agg  FROM (SELECT DISTINCT(seriesID), avg(measure) AS avg_agg ,min(measure) AS min_agg  FROM tseriesdb WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' GROUP BY 1 HAVING avg_agg <= 2.0 AND  avg_agg <= (SELECT stddev(measure) AS stddev_agg  FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation')))ON seriesID = seriesID2"
       aggQuery.composeAggregationQuery mustBe expectedQuery
     }
   }

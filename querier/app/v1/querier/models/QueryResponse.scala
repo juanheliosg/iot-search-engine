@@ -2,8 +2,21 @@ package v1.querier.models
 
 import play.api.libs.json._
 
-import java.time.LocalDateTime
 import scala.collection.mutable
+
+/**
+ * Subsequence relative to the
+ * @param ed euclidean distance to the query subsequence
+ * @param start start of the subsequence in the series array
+ */
+case class Subsequence(ed: BigDecimal, start: Long){
+
+}
+
+object Subsequence{
+  implicit val format: Format[Subsequence] = Json.format[Subsequence]
+  implicit val order: Ordering[Subsequence] = Ordering.by{ subseq: Subsequence => subseq.ed}
+}
 
 /**
  * Response representing a serie which belongs to a sensor
@@ -41,15 +54,16 @@ case class QueryResponse(seriesId: String,
                           measureName: String,
                           measureUnit: String,
                           measureDescr: String,
-                          tags: Seq[String],
-                          coordinates: Seq[String],
+                          tags: Set[String],
+                          lat: String,
+                          long: String,
                           timestamps: Seq[String],
                           values: Seq[BigDecimal],
                           stats: Seq[(String, String)],
-                          subsequences: mutable.Seq[Subsequence] = mutable.Seq.empty
+                          subsequences: mutable.TreeSet[Subsequence] = mutable.TreeSet.empty
                         ){
 
-  def toJson(): JsObject = {
+  def toJson: JsObject = {
     Json.obj(
       "seriesId" -> seriesId,
       "sourceName" -> sourceName,
@@ -64,14 +78,16 @@ case class QueryResponse(seriesId: String,
       "measureName" -> measureName,
       "measureUnit" -> measureUnit,
       "measureDescr" -> measureDescr,
-      "tags" -> Json.arr(tags),
-      "timestamps" -> Json.arr(timestamps),
-      "values" -> Json.arr(values),
+      "tags" -> tags,
+      "lat" -> lat,
+      "long" -> long,
+      "timestamps" -> timestamps,
+      "values" -> values,
       "stats" -> stats.map( stat => Json.obj(
         "name" -> stat._1,
         "value" -> stat._2
       )),
-      "subsequences" -> subsequences.map( sub => {
+      "subsequences" -> subsequences.toList.map( sub => {
         Json.obj(
           "ed" -> sub.ed,
           "start"-> sub.start,
@@ -85,15 +101,3 @@ object QueryResponse{
   implicit val format: Format[QueryResponse] = Json.format[QueryResponse]
 }
 
-/**
- * Subsequence relative to the
- * @param ed euclidean distance to the query subsequence
- * @param start start of the subsequence in the series array
- */
-case class Subsequence(ed: Double, start: Long){
-
-}
-
-object Subsequence{
-  implicit val format: Format[Subsequence] = Json.format[Subsequence]
-}

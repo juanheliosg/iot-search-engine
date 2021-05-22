@@ -13,7 +13,7 @@ def get_timedelta(sampling_unit, sampling_freq):
         return np.timedelta64(sampling_freq/1000,'s')
     elif sampling_unit == "seconds":
         return np.timedelta64(sampling_freq,'s')
-    elif sampling_unit == "minutes":
+    elif sampling_unit == "minute":
         return np.timedelta64(sampling_freq, 'm')
     elif sampling_unit == "hour":
         return np.timedelta64(sampling_freq, 'h')

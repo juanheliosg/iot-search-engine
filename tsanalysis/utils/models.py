@@ -11,7 +11,7 @@ class SamplingUnits(str, Enum):
     """
     milliseconds = "milliseconds"
     seconds = "seconds"
-    minutes = "minutes"
+    minutes = "minute"
     hour = "hour"
     day = "day"
     year = "year"

@@ -10,7 +10,7 @@ object QueryForm {
   import play.api.data.Forms._
 
   /**
-   * Check if a date is in ISO format
+   * Check if a date is in ISO formatForm
    * @param date date to be parse
    * @return
    */
@@ -30,16 +30,16 @@ object QueryForm {
       "limit" -> number(min=0),
       "timeRange" -> list(
           tuple(
-            "lowerBound" -> nonEmptyText.verifying("Date is not in ISO format",isISO(_)),
-            "upperBound" -> nonEmptyText.verifying("Date is not in ISO format",isISO(_))
+            "lowerBound" -> nonEmptyText.verifying("Date is not in ISO formatForm",isISO(_)),
+            "upperBound" -> nonEmptyText.verifying("Date is not in ISO formatForm",isISO(_))
           )
         ).verifying("Empty time range list",_.nonEmpty),
-      "timeseries"-> default(boolean,true),
+      "timeseries"-> default(boolean,false),
       "type" -> nonEmptyText.verifying("Invalid query type", QueryType.isType(_)),
       "filter" -> text,
       "subsequenceQuery" -> optional(
         mapping(
-        "subsequence" -> list(bigDecimal),
+        "subsequence" -> list(bigDecimal).verifying("Subsequence must be greater than 2",_.size > 2),
         "normalization" -> default(boolean, true),
         "equality" -> default(boolean, true),
       )(SubsequenceQuery.apply)(SubsequenceQuery.unapply)),
@@ -57,11 +57,21 @@ object QueryForm {
                         (aggFilter.value.isEmpty && aggFilter.aggComparation.isEmpty)
           )
         )
-      ),
-      "tendencyQuery" -> optional(text.verifying(
-                          "Invalid tendency query",
-                                 tend => tend == "asc" || tend == "desc"))
-    )(Query.apply)(Query.unapply).verifying("Complex queries must have timeseries set to true",q => q.subseQuery.isEmpty == q.timeseries)
+      )
+    )(Query.apply)(Query.unapply)
+      .verifying("Complex queries must have timeseries set to true",q => q.subseQuery match{
+        case None => !q.timeseries || q.query != QueryType.complex
+        case _ => q.timeseries
+      })
+      .verifying("Aggregation queries must have aggregationFilter field", q=> {
+        val qtype = QueryType.withName(q.query)
+        q.aggregationFilter match{
+          case None =>
+            qtype != QueryType.aggregation
+          case _ =>
+            qtype == QueryType.aggregation || qtype == QueryType.complex
+        }
+      })
   )
 
 }

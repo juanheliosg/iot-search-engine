@@ -4,7 +4,7 @@ import play.api.Logger
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Result}
 import play.api.libs.json._
-import v1.querier.models.{Query, QueryType, Subsequence}
+import v1.querier.models.{Query, QueryResponse, QueryType, Subsequence}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,12 +15,12 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
   private val maxSubseqQuery = 1000
   implicit val executionContext: ExecutionContext = cc.executionContext
 
-  def getRawRecords(query: Query): Future[Either[List[DruidRecord], List[JSONError]]] = {
+  def getQueryResponses(query: Query): Future[Either[Future[Seq[QueryResponse]], List[JSONError]]] = {
     query.queryType match {
       case QueryType.simple =>
-        druidApi.getRecords(query.composeBasicQuery)
+        druidApi.getRecordsWithStream(query.composeBasicQuery)
       case QueryType.aggregation =>
-        druidApi.getRecords(query.composeAggregationQuery)
+        druidApi.getRecordsWithStream(query.composeAggregationQuery)
       case QueryType.complex =>
         val sqlQuery = if (query.aggregationFilter.nonEmpty
               && query.aggregationFilter.get.nonEmpty){
@@ -28,7 +28,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
         }else {
           query.composeBasicQuery
         }
-        druidApi.getRecords(sqlQuery)
+        druidApi.getRecordsWithStream(sqlQuery)
     }
   }
 
@@ -40,29 +40,38 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
   def complexQuery(query: Query): Future[Result] = {
     if (query.subseQuery.nonEmpty){
       val subseQuery = query.subseQuery.get
-      val rawRecords = getRawRecords(query)
-      rawRecords.flatMap{
-        case Left(rawRecords) =>
-          val queryResponseMap = QueryProcessor.arrangeMapQueryResponse(rawRecords,query.timeseries)
-          val subseqResults = tsAPI.searchSubsequence(queryResponseMap.toList,subseQuery.subsequence)
-          val result = subseqResults.map{
-            case Left(subseq) =>
-              subseq.foreach(subse => {
-                queryResponseMap(subse.series_id)
-                  .subsequences.+:(Subsequence(subse.ed,subse.start))
-              })
-              val finalList = queryResponseMap.values.toList.sortWith{ (first, second) => {
-                first.subsequences.maxBy(_.ed).ed > second.subsequences.maxBy(_.ed).ed
+      val futureResponsesSeq = getQueryResponses(query)
+      futureResponsesSeq.flatMap{
+        case Left(futureResponsesSeq) =>
+          futureResponsesSeq.flatMap(queryResponseList => {
+              val queryResponseMap = queryResponseList.map(qr => (qr.seriesId,qr)).toMap
+              val subseqResults = tsAPI.searchSubsequence(queryResponseMap.toList, subseQuery.subsequence)
+              subseqResults.map{
+                case Left(subseq) =>
+                  subseq.foreach(subse => {
+                    queryResponseMap(subse.series_id).subsequences += (Subsequence(subse.ed,subse.start))
+                  })
+                  val finalList = queryResponseMap.values.toList.sortWith{ (first, second) => {
+                    if (first.subsequences.nonEmpty && second.subsequences.nonEmpty){
+                      first.subsequences.maxBy(_.ed).ed > second.subsequences.maxBy(_.ed).ed
+                    }
+                    else if (first.subsequences.nonEmpty){
+                      true
+                    }
+                    else{
+                      false
+                    }
+
+                  }
+                  }.take(query.limit)
+                  Ok(Json.obj(
+                    "items" -> finalList.size,
+                    "series" -> finalList.map(_.toJson)
+                  ))
+                case Right(error) =>
+                  BadRequest(JSONError.format(error))
               }
-              }.take(query.limit)
-              Ok(Json.obj(
-                "items" -> finalList.size,
-                "series" -> finalList.map(_.toJson())
-              ))
-            case Right(error) =>
-              BadRequest(JSONError.format(error))
-          }
-          result
+          })
         case Right(error) =>
           Future{BadRequest(JSONError.format(error))}
       }
@@ -80,7 +89,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
     QueryForm.form.bindFromRequest().fold(
       formWithErrors => {
         Future{
-          BadRequest(JSONError.format(formWithErrors.errors))
+          BadRequest(JSONError.formatForm(formWithErrors.errors))
         }
       },
       success = query => {
@@ -96,18 +105,20 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
                   ))}
             }
           case _ =>
-            val rawResponseFuture = getRawRecords(query)
-            rawResponseFuture.map{
-              case Left(rawRecords) =>
-                val queryResponseList = QueryProcessor.arrangeQuery(rawRecords, query.timeseries)
-                val finalList = queryResponseList.take(query.limit)
-                Ok(Json.obj(
-                  "items" -> finalList.size,
-                  "series" -> finalList.map(_.toJson())
-                ))
+            val queryResponseFuture = getQueryResponses(query)
+            queryResponseFuture.flatMap({
+              case Left(queryResponseListFuture) =>
+                queryResponseListFuture.map( queryResponseList => {
+                  val finalList = queryResponseList.take(query.limit)
+                  Ok(Json.obj(
+                    "items" -> finalList.size,
+                    "series" -> finalList.map(_.toJson)
+                  ))
+                }
+                )
               case Right(error) =>
-                BadRequest(JSONError.format(error))
-            }
+                Future{BadRequest(JSONError.format(error))}
+            })
         }
       }
     )
@@ -115,10 +126,12 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
   }
 
   private def getFieldCount(field: String): Future[Result] = {
-    druidApi.getRecords(field).flatMap{
+    druidApi.getCountField(field).flatMap{
       case Left(rawTags) =>
         Future{
-          Ok(Json.arr(rawTags))
+          Ok(Json.obj(
+            "items" -> rawTags.size,
+            "count"-> rawTags))
         }
       case Right(error) =>
         Future {
@@ -133,7 +146,7 @@ class QuerierController @Inject() (val cc: ControllerComponents, val druidApi: D
   }
   def getNames: Action[AnyContent] = Action.async{ implicit request => {
     logger.trace(s"Getting measure names from request with id ${request.id}")
-    getFieldCount("measure_name")
+    getFieldCount("name")
   }
   }
   def getMeasuresName: Action[AnyContent] = Action.async{ implicit request => {

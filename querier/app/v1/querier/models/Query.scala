@@ -14,7 +14,7 @@ object Query{
  *
  * @param limit number of elements to be retrieved
  * @param timeseries true for returning the time series values, false for just the series metadata
- * @param timeRanges list of time ranges en ISO format to be considered
+ * @param timeRanges list of time ranges en ISO formatForm to be considered
  * @param query type of query can be simple, aggregation and complex
  * @param filter SQL Where clause to filter
  * @param subseQuery Subsequence to be search in the database
@@ -25,8 +25,7 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
                  timeseries: Boolean = false,
                  query: String, filter: String,
                  subseQuery: Option[SubsequenceQuery] = None,
-                 aggregationFilter: Option[List[AggregationFilter]] = None,
-                 tendencyQuery: Option[String] = None){
+                 aggregationFilter: Option[List[AggregationFilter]] = None){
 
   val queryType: QueryType.Value = QueryType.withName(query)
 
@@ -48,12 +47,14 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
    */
   def composeBasicQuery: String = {
     if (timeseries){
-      s"SELECT * FROM $datasource ${composeWhere()} ORDER BY __time"
+      s"SELECT seriesID, sensorID, measure, __time, address, city, country, description, " +
+        "measure_desc, measure_name, name, region, sampling_unit, sampling_freq," +
+        s" tags, unit, lat, long FROM $datasource ${composeWhere()}"
     }
     else{
-      s"SELECT DISTINCT(seriesID), sensorID, address, city, country, description, " +
-        "measure_desc, measure_name, name, region, sampling_unit," +
-        s" tags, unit FROM $datasource ${composeWhere()}"
+      s"SELECT DISTINCT seriesID, sensorID, address, city, country, description, " +
+        "measure_desc, measure_name, name, region, sampling_unit, sampling_freq," +
+        s" tags, unit, lat, long FROM $datasource ${composeWhere()}"
     }
   }
 
@@ -69,11 +70,11 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
 
     val selection = timeseries match{
       case true =>  s"SELECT seriesID, sensorID, __time, address, city, country, description, " +
-        "measure, measure_desc, measure_name, name, region, sampling_unit," +
-        s" tags, unit, $aggResults FROM "
-      case false => s"SELECT DISTINCT(seriesID), sensorID, address, city, country, description, " +
-        "measure_desc, measure_name, name, region, sampling_unit," +
-        s" tags, unit, $aggResults FROM "
+        "measure, measure_desc, measure_name, name, region, sampling_unit, sampling_freq," +
+        s" tags, unit, lat, long, $aggResults FROM "
+      case false => s"SELECT DISTINCT seriesID, sensorID, address, city, country, description, " +
+        "measure_desc, measure_name, name, region, sampling_unit, sampling_freq," +
+        s" tags, unit, lat, long, $aggResults FROM "
     }
 
 
@@ -84,11 +85,12 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
     ).toSet.mkString(",")
 
     val havingClausule = aggFilter.map(filter => {
+
       if (filter.value.nonEmpty){
         s"${filter.aggreg}_agg ${filter.relation.get} ${filter.value.get}"
       }
       else if(filter.aggComparation.nonEmpty){
-        s"${filter.aggreg}_agg ${filter.relation.get} " +
+        s" ${filter.aggreg}_agg ${filter.relation.get} " +
           s"(SELECT ${
             val agg = filter.aggComparation.get
             s"$agg(measure) AS ${agg}_agg "
@@ -104,15 +106,15 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
         s" INNER JOIN" +
         s"(SELECT seriesID as seriesID2, $aggResults FROM " +
         s"(SELECT DISTINCT(seriesID), $aggComputation FROM $datasource" +
-        s"$whereClausule GROUP BY 1 HAVING $havingClausule))" +
-        s"ON seriesID = seriesID2 ORDER BY __time"
+        s"$whereClausule GROUP BY 1 ${if (havingClausule.nonEmpty) s"HAVING $havingClausule" else ""}))" +
+        s"ON seriesID = seriesID2"
     }
     else{
       s"$selection (SELECT * FROM $datasource $whereClausule )" +
         s" INNER JOIN" +
         s"(SELECT seriesID as seriesID2, $aggResults FROM " +
         s"(SELECT DISTINCT(seriesID), $aggComputation FROM $datasource" +
-        s"$whereClausule GROUP BY 1 HAVING $havingClausule))" +
+        s"$whereClausule GROUP BY 1 ${if (havingClausule.nonEmpty) s"HAVING $havingClausule"}))" +
         s"ON seriesID = seriesID2"
 
     }

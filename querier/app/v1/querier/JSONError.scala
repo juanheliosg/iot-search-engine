@@ -4,9 +4,7 @@ import play.api.data.FormError
 import play.api.libs.json.{JsArray, JsValue, Json}
 
 case class JSONError(error: String, errorMessage: String){
-  def toJson() = {
 
-  }
 }
 
 object JSONError{
@@ -20,26 +18,26 @@ object JSONError{
     tsAnalysisListError.detail.map(er => JSONError(er)).toList
   }
 
-  def format(errors: Seq[JSONError]) = {
-    Json.arr(
-      errors.map( err =>
+  def format(errors: Seq[JSONError]): JsValue = {
+    val errorsFormat = errors.map( err =>
         Json.obj(
           "error" -> err.error,
           "errorMessage" -> err.errorMessage
         )
-      )
     )
+    Json.toJson(errorsFormat)
+
   }
 
-  def format(errors: Seq[FormError]): JsValue = {
-    Json.arr(
-      errors.map( err =>
+  def formatForm(errors: Seq[FormError]): JsValue = {
+      val errorsFormat = errors.map( err =>
         Json.obj(
-          "error" -> err.key,
+          "error" -> "Form validation error",
             "errorMessage" -> err.message
         )
       )
-    )
+    Json.toJson(errorsFormat)
+
   }
 
 

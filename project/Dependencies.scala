@@ -47,6 +47,6 @@ object Dependencies{
       kafkaClient, kafkaTestContainers % Test, cassandraTestContainer % Test)
 
    val querierDeps = Seq(playScalaTest % Test,mockitoScala % Test,
-      ws,akkaStreams, akkaSerialization, ehcache)
+      ws,akkaStreams, akkaSerialization,alpakkaJSON, ehcache)
 
 }

@@ -5,7 +5,8 @@
 
 # scala 3
 .tasty
-
+#druid dirs
+druid_data/
 
 # vs code
 .vscode
