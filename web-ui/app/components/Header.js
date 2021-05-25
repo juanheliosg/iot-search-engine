@@ -3,15 +3,15 @@ import { Container,Row,Col } from "react-bootstrap";
 
 const Header = () => {
     return(
-        <Container as="header">
+        <Container as="header" className="mb-3" style = {{maxWidth: "800px"}}>
             <Row className="justify-content-center">
-                <Col md="auto" className="align-items-center">
-                    <Image src="/logo.svg" width={120} height={120}/>          
+                <Col md="auto" className="align-items-center mt-3">
+                    <Image src="/logo.svg" width={100} height={100}/>          
                 </Col>
             </Row>
             <Row className="justify-content-center">
                 <Col>
-                    <h1 className="text-center">Nereida</h1>
+                    <h1 className="text-center" style={{fontSize: "2rem"}}>Nereida</h1>
                 </Col>
             </Row>
             <Row className="justify-content-center">
