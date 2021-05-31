@@ -2,9 +2,16 @@ import { Accordion, Card,Row,Col, Button } from 'react-bootstrap'
 import SearchSummary from './SearchSummary'
 import AdvancedSearch from './AdvancedSearch'
 import Link from 'next/link'
+import { useState} from 'react'
 import { useAccordionToggle } from 'react-bootstrap/AccordionToggle';
 import Search from './icons/Search'
 
+/**
+ * Custom toggle button for displaying the advanced search
+ * @param children children props for customization
+ * @param eventKey event key
+ * @returns 
+ */
 const ToggleButton = ({children, eventKey}) => {
   const decoratedOnClick = useAccordionToggle(eventKey);
 
@@ -20,9 +27,18 @@ const ToggleButton = ({children, eventKey}) => {
 }
 
 
-const AccordionSearch = ({search,index}) =>{
+/**
+ * Query accordion including a summary in a human readable format and 
+ * a form for updating the query.
+ * @param {initSearch}
+ * @param {index} 
+ * @returns 
+ */
+const AccordionSearch = ({initSearch,index}) =>{
+    const [search, setSearch] = useState(initSearch)
+
     return(
-    <Card as="article" style={{border: "0px"}}>
+    <Card key={index} as="article" style={{border: "0px", overflow: "visible"}}>
         <Card.Header className="pt-1 pb-0" style={{backgroundColor: "rgba(0,0,0,0)"}}>
             <Row>
                 <Col xs={10} className="mr-0 pr-0">
@@ -44,7 +60,7 @@ const AccordionSearch = ({search,index}) =>{
         </Card.Header>
         <Accordion.Collapse eventKey={index.toString()}>
             <Card.Body>
-                <AdvancedSearch searchQuery={search} />
+                <AdvancedSearch ind={index} searchQuery={search} setSearch={setSearch} />
             </Card.Body>
         </Accordion.Collapse>
     </Card>

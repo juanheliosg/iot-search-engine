@@ -3,10 +3,9 @@ import Header from '../app/components/Header'
 import getSearchExamples from '../app/examples/Searchs'
 import AccordionSearch from '../app/components/AccordionSearch'
 
-
 export default function Home() {
-  let searchExamples = getSearchExamples()
-  var searches = []
+  const searchExamples = getSearchExamples()
+  let searches = []
   if (typeof window !== "undefined"){
     searches = JSON.parse(localStorage.getItem("recentSearches"))
   }
@@ -22,10 +21,10 @@ export default function Home() {
     <>
       <Header />
       <Container fluid style={{maxWidth: "800px"}} as="main">
-          <Accordion as="section">
+          <Accordion as="section" >
             {searches.map( (search,index) => {
             return(
-              <AccordionSearch search={search} index={index} />
+              <AccordionSearch initSearch={search} index={index} />
             )
           })}
           </Accordion>

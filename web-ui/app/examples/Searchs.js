@@ -9,8 +9,8 @@ export default function (){
             "timeseries" : false,
             "timeRange" : [
                 {
-                    "lowerBound": currentDate,
-                    "upperBound": lastDayDate
+                    "lowerBound": lastDayDate,
+                    "upperBound": currentDate
                 }
             ],
             "type" : "simple",
@@ -21,8 +21,8 @@ export default function (){
             "timeseries" : true,
             "timeRange" : [
                 {
-                    "lowerBound": currentDate,
-                    "upperBound": lastDayDate
+                    "lowerBound": lastDayDate,
+                    "upperBound": currentDate
                 }
             ],
             "type" : "aggregation",
@@ -40,8 +40,12 @@ export default function (){
             "timeseries" : true,
             "timeRange" : [
                 {
-                    "lowerBound": currentDate,
-                    "upperBound": lastDayDate
+                    "lowerBound": lastDayDate,
+                    "upperBound": currentDate
+                },
+                {
+                    "lowerBound": sub(currentDate,{days: 3}),
+                    "upperBound": sub(currentDate,{days: 2})
                 }
             ],
             "type" : "complex",

@@ -1,44 +1,172 @@
-import { Form, Col } from "react-bootstrap"
+import { Form, Col, Row, Button } from "react-bootstrap"
 import sub from 'date-fns/sub'
-import DatePicker from "react-datepicker"
-import { useState } from 'react'
 
-const AdvancedSearch = ({searchQuery}) => {
-    const [startDate, setStartDate] = useState(new Date());
-    let currentDate = new Date()
-    let lastDayDate = sub(currentDate,{days: 1})
+import PlusCircleFill from "./icons/Plus"
+import DashCircleFill from "./icons/Minus"
+import DateRangeField from "./DateRangeField"
+import AggregationField from "./AggregationField"
+import PropTypes from 'prop-types';
+import { useRef, useState, useEffect } from "react"
+import SubsequenceCanvas from "./SubsequenceCanvas"
+
+
+
+/**
+ * Advanced form for create and update query data.
+ * @param {searchQuery} searchQuery object for retrieving data
+ * @param {setSearch} useState hook for setting data
+ * @param ind for spawning more than one advanced search at once
+ * @returns 
+ */
+const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
+    const [subSearch,setSubSearch] = useState(
+        searchQuery.subsequenceQuery !== undefined)
+
+    console.log(searchQuery)
+
+    const removeObjectFromList = (ind,field) => {
+        const newSearch = {...searchQuery, [field]: searchQuery[field].filter( (range,index) => index != ind)}
+        setSearch(newSearch)
+    }
+    const addRange = () =>  {
+        let currentDate = new Date()
+        let lastDayDate = sub(currentDate,{days: 1})
+        const newTimeRanges = [...searchQuery.timeRange,{
+            lowerBound: lastDayDate,
+            upperBound: currentDate
+        }]
+        
+        const newSearch = {...searchQuery, timeRange: newTimeRanges}
+        setSearch(newSearch)
+    }
+    
+
+    const setField = (field,value) => {
+        setSearch({
+            ...searchQuery, [field]: value
+        })
+    }
+    const setObjectArrayField = (field, arrayVal, value, index) => {
+        let newNestedArray = searchQuery[arrayVal]
+        newNestedArray[index] = {...newNestedArray[index], [field]:value}
+        setSearch({
+            ...searchQuery, [arrayVal]: newNestedArray
+        })
+    }
     return(
         <Form>
             <Form.Group controlID="filterField">
                 <Form.Label>Filtro SQL</Form.Label>
-                <Form.Control type="text" defaultValue={searchQuery.filter? searchQuery.filter.replace(): "city = 'Granada'"} />
+                <Form.Control type="text"
+                            onChange={e => setField('filter',e.target.value)}
+                            defaultValue={searchQuery.filter? searchQuery.filter: "city = 'Granada'"} />
                 <Form.Text className="text-muted">
                     Campos disponibles: sensorID, measure, measure_name, unit, name, measure_desc, city, region, country, address, description, tags, lat, long
                 </Form.Text>
             </Form.Group>
-            <Form.Row>
-                <Form.Group as={Col} controlId="lowerBoundField">
+            
+            {searchQuery.timeRange.map((range, index) => {
+                    return(
+                        <Form.Row className="justify-content-center">
+                            <DateRangeField startDate={range.lowerBound}
+                                        endDate={range.upperBound}
+                                        ind={index}
+                                        setRanges={setObjectArrayField}
+                                        />
+                            { index > 0?
+                                <Col xs={1} className="ml-1">
+                                    <Button variant="link" onClick={() => removeObjectFromList(index,'timeRange')}>
+                                     <DashCircleFill />
+                                    </Button>
+                                </Col>
+                                :         
+                                <Col xs={1} className="ml-1" onClick={() => addRange()}>
+                                    <Button variant="link">
+                                     <PlusCircleFill />
+                                    </Button>
+                                </Col>
+                            }
+                        </Form.Row>
+                        )
+                    })
+                }
+
+            <AggregationField aggFields={searchQuery.aggregationFilter} setAggField={setObjectArrayField} 
+                                removeAggField={removeObjectFromList} setNewAgg={setField}
+            />
+
+            <Form.Row className="justify-content-center">
+                <Form.Group as={Row} className="ml-1">
                     <Form.Label>
-                        Desde
+                        Devolver series temporales
                     </Form.Label>
-                    <Col xs="auto">
-                        <Form.Control type="date" defaultValue={{currentDate}} />
-                    </Col>
+                <Col>
+                    <Form.Check type="checkbox" 
+                        checked={searchQuery.timeseries?searchQuery.timeseries:false} 
+                        onChange={() => {
+                            setSubSearch(false)
+                            setField('timeseries', !searchQuery.timeseries)}} />
+                </Col>
                 </Form.Group>
-                <Form.Group as={Col} controlId="filterField">
+                <Form.Group as={Row} className="ml-1">
                     <Form.Label>
-                        Hasta
+                        Buscar por subsecuencias
                     </Form.Label>
-                    <Col xs="auto">
-                        <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} timeInputLabel="Time:"
-      dateFormat="MM/dd/yyyy H:m:s" locale="es-ES"
-      showTimeInput/>
+                    <Col>
+                        <Form.Check type="checkbox" 
+                            checked={subSearch} 
+                            onChange={() => {
+                                setField('timeseries', true)
+                                setSubSearch(!subSearch)
+                                if (!subSearch)
+                                    setField('subsequenceQuery',undefined)
+                                }} />
                     </Col>
                 </Form.Group>
             </Form.Row>
+            {subSearch && <SubsequenceCanvas ind={ind}subsequence={searchQuery.subsequenceQuery?
+                            searchQuery.subsequenceQuery.subsequence : []}
+                            setSubsequence={setField} 
+                            />
+            }
+            <Form.Row className="justify-content-center mt-1">
+                <Button variant="link">
+                    Buscar
+                </Button>
+            </Form.Row>
+
+
+            
+
+
         </Form>
     )
 }
+
+AdvancedSearch.propTypes = {
+    initSearchQuery :PropTypes.shape({
+        limit: PropTypes.number,
+        timeseries: PropTypes.bool,
+        timeRange: PropTypes.arrayOf(PropTypes.shape({
+            lowerBound: PropTypes.date,
+            upperBound: PropTypes.date
+            }
+        )).isRequired,
+        type: PropTypes.string.isRequired,
+        filter: PropTypes.string.isRequired,
+        subsequenceQuery: PropTypes.shape({
+            subsequence: PropTypes.arrayOf(PropTypes.number)
+        }),
+        aggregationFilter: PropTypes.arrayOf(PropTypes.shape({
+            operation: PropTypes.string,
+            aggComparation: PropTypes.string,
+            value: PropTypes.number,
+            relation: PropTypes.string
+            }
+        ))
+    })
+}
+
 
 export default AdvancedSearch
 

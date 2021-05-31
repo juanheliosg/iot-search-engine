@@ -11,6 +11,15 @@ a {
   text-decoration: none;
 }
 
+
 * {
   box-sizing: border-box;
 }
+
+.flex-wrapper {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+}
+

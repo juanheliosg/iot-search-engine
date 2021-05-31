@@ -1,4 +1,9 @@
 
+/**
+ * Translate aggregations abreviations to human readable format
+ * @param {*} aggFilter 
+ * @returns 
+ */
 const getTranslatedFilter = (aggFilter) => {
     switch(aggFilter){
         case "avg":
@@ -17,7 +22,11 @@ const getTranslatedFilter = (aggFilter) => {
 }
 
 
-
+/**
+ * Create a human readable string from a search object
+ * @param  search searchQuery to be formatted 
+ * @returns 
+ */
 const getSearchSummaryText = (search) => {
     let formattedFilter = search.filter
         .replace("measure_name","medicion")
@@ -42,8 +51,8 @@ const getSearchSummaryText = (search) => {
     let aggregationSummary = search.aggregationFilter?
         search.aggregationFilter.map( agg => {
             let formattedOperation = getTranslatedFilter(agg.operation)
-            let formattedComparation = agg.aggComparation? getTranslatedFilter(agg.aggComparation) : ""
-            return `${formattedOperation} ${agg.relation? agg.relation.replace(":","=") : ""} ${formattedComparation} ${agg.value? agg.value: ""}`
+            let formattedComparation = agg.aggComparation? `${getTranslatedFilter(agg.aggComparation)} total` : ""
+            return `${formattedOperation} ${agg.relation? agg.relation : ""} ${formattedComparation} ${agg.value? agg.value: ""}`
         }).join(" y ") : ""
     
 
@@ -61,6 +70,11 @@ const getSearchSummaryText = (search) => {
     return summary
 }
 
+/**
+ * Render the query in a easy human readable format
+ * @param searchQuery object containing query information 
+ * @returns 
+ */
 const SearchSummary = ({search}) => {
     let textSummary = getSearchSummaryText(search)
     
