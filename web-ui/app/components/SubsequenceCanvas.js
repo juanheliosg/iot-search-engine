@@ -1,12 +1,21 @@
 import { Container } from 'react-bootstrap'
 import dynamic from 'next/dynamic'
-import { Form, Col, Row, Button } from "react-bootstrap"
+import { Form, Col, Row } from "react-bootstrap"
 import { useRef, useState } from 'react'
 
 const DynamicPlot = dynamic(() => import(
     '../../node_modules/react-plotly.js/react-plotly'
     ),
     {ssr: false})
+
+
+const getStandardDeviation = (array) => {
+        const n = array.length
+        const mean = array.reduce((a, b) => a + b) / n
+        return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+      }
+
+const getAverage = (array) => array.reduce((a, b) => a + b) / array.length;
 
 /**
 * Plotly chart wrapper with functionality for adding and removing points  
@@ -17,6 +26,39 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
     
     const containerRef = useRef(null)
     const  [deletePoints,setDeletePoints] = useState(false)
+    const [fileVal, setValidFile] = useState({msg: "", valid: null})
+
+    const handleFileInput = (e) => {
+        const fileToRead = e.target.files[0]
+        const fileReader = new FileReader()
+
+        console.log(fileToRead)
+        fileReader.addEventListener('load', (fileLoadedEvent) => {
+            const textFromFileLoaded = fileLoadedEvent.target.result
+
+            try{
+                let jsonParse = JSON.parse(textFromFileLoaded)
+                if (jsonParse.hasOwnProperty('subsequence')){
+                    let values = jsonParse['subsequence']
+                    //Aplicamos normalización min-max para poder meterlo bien en el gráfico
+                    //Esto no debería de afectar a la búsqueda por que en esta aplcian antes una z-normalizacion
+                    let max = Math.max(...values)
+                    let min = Math.min(...values)
+                    let normalized_values = values.map(el => (el-min)/(max-min))
+                    setSubsequence('subsequenceQuery',{subsequence: normalized_values})
+                    setValidFile({msg: `Archivo ${fileToRead.name} cargado `,valid: true})
+                }
+                else{
+                    setValidFile({msg: `Campo subsequence no encontrado en ${fileToRead.name}`, valid: false})
+                }
+            }catch(error){
+                console.log(error)
+                setValidFile({msg:`No se ha podido parsear ${fileToRead.name}, comprueba el formato`,valid: false})
+            }
+          }) //la lectura es asíncrona
+      
+        fileReader.readAsText(fileToRead, 'UTF-8')
+    }
 
     const newPoint = (e) => {
         //Está dentro del área de selección
@@ -71,16 +113,27 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
         if (data.points){
             const newSubsequence = [...subsequence]
             data.points.forEach( (p) => newSubsequence.splice(p.x,1))
-                
             setSubsequence('subsequenceQuery', {subsequence: newSubsequence}) 
         }
     
 
     }
 
-
+    console.log(fileVal)
     return(
     <>
+        <Row className="mb-3">
+            <Col>
+                <Form.File id="subseq-file" onChange={(e) => handleFileInput(e)}
+                feedback={fileVal.msg}
+                isValid={fileVal.valid}
+                isInvalid={!fileVal.valid}
+                data-browse="Subir"
+                label="Sube un archivo json con: {subsequence: [1,3,2,5]}"
+                custom>        
+                </Form.File>
+            </Col>
+        </Row>
         <Form.Row>
         <Form.Group as={Row} className="ml-1">
             <Form.Label>
@@ -91,6 +144,7 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
                 checked={deletePoints === false}
                 id="anadir"
                 name="edition"
+                custom
                 onChange={() => {
                     setDeletePoints(false)}}
                     />
@@ -105,18 +159,19 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
                     checked={deletePoints === true }
                     id="borrar"
                     name="edition"
+                    custom
                     onChange={() => {
                     setDeletePoints(true)}}
                  />
             </Col>
         </Form.Group>
         <Col>
-        <Form.Text className="text-muted">
-            Añade puntos para reflejar la forma de la subsecuencia que quieres buscar
-        </Form.Text>
+            <Form.Text className="text-muted pt-0 mt-0">
+            O añade puntos para reflejar la forma de la subsecuencia que quieres
+            </Form.Text>
         </Col>
-
     </Form.Row>
+
 
     
     <Container ref={containerRef} onPointerDown={(e) => {if(!deletePoints) newPoint(e)}}>
