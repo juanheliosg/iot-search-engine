@@ -24,6 +24,7 @@
         {"type": "string", "name":  "long"},
         {"type": "string", "name":  "lat"},
           {"type": "long", "name": "measureID" },
+        {"type": "long", "name": "sampling_freq" },
           {"type": "string", "name": "sourceID" }
       ],
       "spatialDimensions": [{
