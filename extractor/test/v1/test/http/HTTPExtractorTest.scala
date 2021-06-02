@@ -28,7 +28,7 @@ class HTTPExtractorTest extends AnyWordSpec {
           |      }
           |""".stripMargin
 
-      val result = HTTPExtractor.parseJSON("2",rawSensorData,schema)
+      val result = HTTPExtractor.parseRecursiveJSON("2",rawSensorData,schema)
       assert(result == Nil)
     }
     "pass just one measure if others empty" in {
@@ -45,7 +45,7 @@ class HTTPExtractorTest extends AnyWordSpec {
           |      }
           |""".stripMargin
 
-      val result = HTTPExtractor.parseJSON("1",rawSensorData,schema)
+      val result = HTTPExtractor.parseRecursiveJSON("1",rawSensorData,schema)
 
       val expectedResult =
         "{\"measure\":420.0,\"sourceID\":\"1\",\"timestamp\":\"2021-03-23T12:04:00Z\",\"measure_desc\":\"Vehículos por hora sobre una espiga\",\"measureID\":0,\"measure_name\":\"ocupation\",\"long\":\"\",\"sensorID\":\"1001\",\"unit\":\"veh/h\",\"seriesID\":\"101001\",\"lat\":\"\"}"
