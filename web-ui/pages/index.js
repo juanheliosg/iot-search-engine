@@ -2,6 +2,7 @@ import { Accordion, AccordionCollapse, Card, Container,Row,Col, Button } from 'r
 import Header from '../app/components/Header'
 import getSearchExamples from '../app/examples/Searchs'
 import AccordionSearch from '../app/components/AccordionSearch'
+import GenericSearch from '../app/components/GenericSearch'
 
 export default function Home() {
   const searchExamples = getSearchExamples()
@@ -21,6 +22,11 @@ export default function Home() {
     <>
       <Header />
       <Container fluid style={{maxWidth: "800px"}} as="main">
+        <Container as="section">
+          <h2 style={{fontSize: "1rem"}}>Haz tu propia consulta</h2>
+          <GenericSearch />
+        </Container>
+        <h2 style={{fontSize: "1rem"}}>Consultas previas</h2>
           <Accordion as="section" >
             {searches.map( (search,index) => {
             return(

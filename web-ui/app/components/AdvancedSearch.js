@@ -1,12 +1,10 @@
 import { Form, Col, Row, Button } from "react-bootstrap"
 import sub from 'date-fns/sub'
 
-import PlusCircleFill from "./icons/Plus"
-import DashCircleFill from "./icons/Minus"
-import DateRangeField from "./DateRangeField"
+import DateRangeComponent from './DateRangeComponent'
 import AggregationField from "./AggregationField"
 import PropTypes from 'prop-types';
-import { useRef, useState, useEffect } from "react"
+import { useState } from "react"
 import SubsequenceCanvas from "./SubsequenceCanvas"
 
 
@@ -28,18 +26,6 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
         const newSearch = {...searchQuery, [field]: searchQuery[field].filter( (range,index) => index != ind)}
         setSearch(newSearch)
     }
-    const addRange = () =>  {
-        let currentDate = new Date()
-        let lastDayDate = sub(currentDate,{days: 1})
-        const newTimeRanges = [...searchQuery.timeRange,{
-            lowerBound: lastDayDate,
-            upperBound: currentDate
-        }]
-        
-        const newSearch = {...searchQuery, timeRange: newTimeRanges}
-        setSearch(newSearch)
-    }
-    
 
     const setField = (field,value) => {
         setSearch({
@@ -58,6 +44,7 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
             <Form.Group controlID="filterField">
                 <Form.Label>Filtro SQL</Form.Label>
                 <Form.Control type="text"
+                            as="textarea"
                             onChange={e => setField('filter',e.target.value)}
                             defaultValue={searchQuery.filter? searchQuery.filter: "city = 'Granada'"} />
                 <Form.Text className="text-muted">
@@ -65,31 +52,11 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
                 </Form.Text>
             </Form.Group>
             
-            {searchQuery.timeRange.map((range, index) => {
-                    return(
-                        <Form.Row className="justify-content-center">
-                            <DateRangeField startDate={range.lowerBound}
-                                        endDate={range.upperBound}
-                                        ind={index}
-                                        setRanges={setObjectArrayField}
-                                        />
-                            { index > 0?
-                                <Col xs={1} className="ml-1">
-                                    <Button variant="link" onClick={() => removeObjectFromList(index,'timeRange')}>
-                                     <DashCircleFill />
-                                    </Button>
-                                </Col>
-                                :         
-                                <Col xs={1} className="ml-1" onClick={() => addRange()}>
-                                    <Button variant="link">
-                                     <PlusCircleFill />
-                                    </Button>
-                                </Col>
-                            }
-                        </Form.Row>
-                        )
-                    })
-                }
+            <DateRangeComponent searchQuery={searchQuery}
+                                setSearch={setSearch}
+                                removeObjectFromList={removeObjectFromList} 
+                                setObjectArrayField={setObjectArrayField}
+                                />
 
             <AggregationField aggFields={searchQuery.aggregationFilter} setAggField={setObjectArrayField} 
                                 removeAggField={removeObjectFromList} setNewAgg={setField}
@@ -102,7 +69,7 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
                     </Form.Label>
                 <Col>
                     <Form.Check type="checkbox" 
-                        checked={searchQuery.timeseries?searchQuery.timeseries:false} 
+                        checked={searchQuery.timeseries} 
                         onChange={() => {
                             setSubSearch(false)
                             setField('timeseries', !searchQuery.timeseries)}} />
@@ -114,7 +81,8 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
                     </Form.Label>
                     <Col>
                         <Form.Check type="checkbox" 
-                            checked={subSearch} 
+                            checked={subSearch}
+                            disabled={!searchQuery.timeseries}
                             onChange={() => {
                                 setField('timeseries', true)
                                 setSubSearch(!subSearch)
@@ -129,24 +97,14 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
                             setSubsequence={setField} 
                             />
             }
-            <Form.Row className="justify-content-center mt-1">
-                <Button variant="link">
-                    Buscar
-                </Button>
-            </Form.Row>
-
-
-            
-
-
         </Form>
     )
 }
 
 AdvancedSearch.propTypes = {
     initSearchQuery :PropTypes.shape({
-        limit: PropTypes.number,
-        timeseries: PropTypes.bool,
+        limit: PropTypes.number.isRequired,
+        timeseries: PropTypes.bool.isRequired,
         timeRange: PropTypes.arrayOf(PropTypes.shape({
             lowerBound: PropTypes.date,
             upperBound: PropTypes.date

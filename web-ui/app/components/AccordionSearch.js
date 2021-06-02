@@ -1,4 +1,4 @@
-import { Accordion, Card,Row,Col, Button } from 'react-bootstrap'
+import { Accordion, Card,Row,Col, Button, Form } from 'react-bootstrap'
 import SearchSummary from './SearchSummary'
 import AdvancedSearch from './AdvancedSearch'
 import Link from 'next/link'
@@ -61,7 +61,13 @@ const AccordionSearch = ({initSearch,index}) =>{
         <Accordion.Collapse eventKey={index.toString()}>
             <Card.Body>
                 <AdvancedSearch ind={index} searchQuery={search} setSearch={setSearch} />
+                <Form.Row className="justify-content-center mt-1">
+                <Button variant="link">
+                    Buscar
+                </Button>
+            </Form.Row>
             </Card.Body>
+
         </Accordion.Collapse>
     </Card>
     )
