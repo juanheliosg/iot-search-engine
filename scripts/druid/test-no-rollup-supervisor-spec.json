@@ -70,10 +70,11 @@
     },
     "taskCount": 1,
     "replicas": 1,
-    "taskDuration": "PT1H"
+    "taskDuration": "PT2M"
   },
   "tuningConfig": {
     "type": "kafka",
-    "maxRowsPerSegment": 5000000
+    "maxRowsPerSegment": 200000,
+    "maxRowsInMemory": 10000
   }
 }
