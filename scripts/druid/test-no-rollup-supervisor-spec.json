@@ -24,6 +24,7 @@
         {"type": "string", "name":  "long"},
         {"type": "string", "name":  "lat"},
           {"type": "long", "name": "measureID" },
+        {"type": "long", "name": "sampling_freq" },
           {"type": "string", "name": "sourceID" }
       ],
       "spatialDimensions": [{
@@ -69,10 +70,11 @@
     },
     "taskCount": 1,
     "replicas": 1,
-    "taskDuration": "PT1H"
+    "taskDuration": "PT2M"
   },
   "tuningConfig": {
     "type": "kafka",
-    "maxRowsPerSegment": 5000000
+    "maxRowsPerSegment": 200000,
+    "maxRowsInMemory": 10000
   }
 }
