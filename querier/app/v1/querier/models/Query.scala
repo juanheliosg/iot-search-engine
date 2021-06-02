@@ -182,6 +182,7 @@ object RelationType extends ExtendedEnum {
   type RelationType = Value
   val eq = Value("=")
   val gt = Value(">")
+  val le = Value("<")
   val lt = Value(">=")
   val ge = Value("<=")
 
