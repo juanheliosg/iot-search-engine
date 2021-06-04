@@ -1,10 +1,10 @@
 import Footer from '../app/components/Footer'
-import { Container } from "react-bootstrap";
 import Head from 'next/head'
 import '../styles/globals.css'
 import "react-datepicker/dist/react-datepicker.css"
 
 function MyApp({ Component, pageProps }) {
+  
 
   return (
   <div className="flex-wrapper">
@@ -19,7 +19,7 @@ function MyApp({ Component, pageProps }) {
         crossOrigin="anonymous"
       />
     </Head>
-    <Component {...pageProps} />
+      <Component {...pageProps} />
     <Footer />
   </div>
 

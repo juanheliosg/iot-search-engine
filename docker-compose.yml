@@ -190,3 +190,11 @@ services:
       SEED_PORT_1600_TCP_ADDR: extractor-seed
       CASSANDRA_CONTACT_POINTS: cassandra:9042
 
+
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+

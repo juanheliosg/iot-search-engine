@@ -34,7 +34,7 @@ const initialFilter = {
  * 
  * @returns 
  */
-const GenericSearch = () => {
+const GenericSearch = ({fieldHelp}) => {
     const [simpleSearch, setSimpleSearch] = useState(true)
     const [searchQuery, setSearch] = useState(initialQuery)
     const [simplifiedFilter, setSimpFilter] = useState(initialFilter)
@@ -42,25 +42,27 @@ const GenericSearch = () => {
 
     const simpToNormalSearch = (simplifiedSearch) => {
         let sqlFilter = ""
+        console.log(simplifiedSearch)
         for (const key in simplifiedSearch){
-            if (simplifiedSearch[key]){
+            if (simplifiedSearch[key] ){
                 if (sqlFilter !== ""){
                     sqlFilter = sqlFilter.concat( " AND ")
                 }
-                if (key == 'tags' && simplifiedSearch.tags.size > 0){
+                if (key == 'tags')
+                {   if (simplifiedSearch.tags > 0){
                     const tags = [...simplifiedSearch[key]]
                     console.log(tags)
                     sqlFilter = sqlFilter.concat(` tags IN ('${tags.join("','")}')`)
+                    }
                 }
+            
                 else if (simplifiedSearch[key] !== null && key === 'sampling_freq'){
                     sqlFilter = sqlFilter.concat(`${key} = ${parseInt(simplifiedSearch[key])}`)
                 }
-                else if (simplifiedSearch[key] !== null){
+                else if (simplifiedSearch[key] !== "none"){
                     sqlFilter = sqlFilter.concat( `${key} = '${simplifiedSearch[key]}'`)
                 }
             }
-            
-
         }
         setSearch({
             ...searchQuery, filter: sqlFilter
@@ -70,14 +72,15 @@ const GenericSearch = () => {
 
     return(
         <>
-        {simpleSearch?<SimpleSearch 
+        {simpleSearch?<SimpleSearch
+                        fieldHelp={fieldHelp}
                         searchQuery={searchQuery}
                         simplifiedFilter={simplifiedFilter}
                         setSimpFilter={setSimpFilter}
                         setSearch={setSearch} /> 
         
         
-        : <AdvancedSearch searchQuery={searchQuery} setSearch={setSearch} ind={0} />}
+        : <AdvancedSearch fieldHelp={fieldHelp.fields} searchQuery={searchQuery} setSearch={setSearch} ind={0} />}
         {simpleSearch
         ? <Form.Row className="justify-content-center mt-1">
             <Button variant="link" onPointerDown={() =>{

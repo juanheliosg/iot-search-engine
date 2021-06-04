@@ -1,7 +1,6 @@
 import { Accordion, Card,Row,Col, Button, Form } from 'react-bootstrap'
 import SearchSummary from './SearchSummary'
 import AdvancedSearch from './AdvancedSearch'
-import Link from 'next/link'
 import { useState} from 'react'
 import { useAccordionToggle } from 'react-bootstrap/AccordionToggle';
 import Search from './icons/Search'
@@ -13,7 +12,7 @@ import Search from './icons/Search'
  * @returns 
  */
 const ToggleButton = ({children, eventKey}) => {
-  const decoratedOnClick = useAccordionToggle(eventKey);
+    const decoratedOnClick = useAccordionToggle(eventKey);
 
   return (
     <button
@@ -34,8 +33,10 @@ const ToggleButton = ({children, eventKey}) => {
  * @param {index} 
  * @returns 
  */
-const AccordionSearch = ({initSearch,index}) =>{
+const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
     const [search, setSearch] = useState(initSearch)
+    
+    
 
     return(
     <Card key={index} as="article" style={{border: "0px", overflow: "visible"}}>
@@ -60,7 +61,7 @@ const AccordionSearch = ({initSearch,index}) =>{
         </Card.Header>
         <Accordion.Collapse eventKey={index.toString()}>
             <Card.Body>
-                <AdvancedSearch ind={index} searchQuery={search} setSearch={setSearch} />
+                <AdvancedSearch ind={index} searchQuery={search} setSearch={setSearch} fieldHelp={fieldHelp} />
                 <Form.Row className="justify-content-center mt-1">
                 <Button variant="link">
                     Buscar

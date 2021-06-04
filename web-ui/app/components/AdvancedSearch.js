@@ -1,13 +1,99 @@
-import { Form, Col, Row, Button } from "react-bootstrap"
+import { Form, Col, Row, Button, Overlay, Tooltip } from "react-bootstrap"
 import sub from 'date-fns/sub'
 
 import DateRangeComponent from './DateRangeComponent'
 import AggregationField from "./AggregationField"
 import PropTypes from 'prop-types';
-import { useState } from "react"
+import { useRef, useState } from "react"
 import SubsequenceCanvas from "./SubsequenceCanvas"
 
+const getHelp = (fieldHelpList) => {
 
+    return [
+        {field: "sensorID",
+            msg: "Localiza un sensor único"},
+        {field: "measure",
+            msg: "Compara numéricamente para obtener sensores con valores mayores a una cantidad"},
+        {field: "measure_name", msg: "Nombre de la medición",
+            values: fieldHelpList?fieldHelpList['measure'].fieldList:[]},
+
+        {field: "measure_units", msg: "Unidad física de la medición",
+        values: fieldHelpList?fieldHelpList['measure_units'].fieldList:[]},
+
+        {field: "name", msg: "Nombre de la fuente de datos",
+        values: fieldHelpList?fieldHelpList['names'].fieldList:[]},
+        {field: "measure_desc", msg:"Descripción, usa LIKE para buscar dentro"},
+
+        {field: "city", msg: "Ciudad donde está la fuente", 
+            values: fieldHelpList?fieldHelpList['cities'].fieldList:[] },
+
+        {field: "region", msg: "Región donde está la fuente", 
+        values: fieldHelpList?fieldHelpList['regions'].fieldList:[] },
+
+        {field: "country", msg: "País donde está la fuente", 
+        values: fieldHelpList?fieldHelpList['countries'].fieldList:[] },
+
+        {field: "address", msg: "Dirección postal de la fuente"},
+
+        {field: "description", msg: "Descripción de la fuente de datos. Usa Like para buscar dentro"},
+
+        {field: "tags", msg: "Etiquetas sobre la fuente", 
+        values: fieldHelpList?fieldHelpList['tags'].fieldList:[] }
+    ]
+}
+
+
+const filterHelpOverlay = (fieldHelp) => {
+    //diferenciar entre los que tienen información de campos y los que no
+    //dar ayuda de los que no
+    //hacer un filter fields objecto con la ayuda para cada uno e iterar a partir de ahí
+    //añadir adicionalmente lso fields para cuando no se tenga la ayuda
+    const [show, setShow] = useState(false);
+    const target = useRef(null)
+    if (fieldHelp.values !== undefined){
+        return(
+        <>
+            <Button
+                ref={target}
+                onClick={() => setShow(!show)}
+                variant="light"
+                className="d-inline-flex align-items-center"
+            >
+                <span className="ml-1">{fieldHelp.field}</span>
+            </Button>
+            <Overlay placement="top-end" target={target.current} show={show}>
+            {(props) => (
+                <Tooltip id={fieldHelp.msg} {...props}>
+                    <p>{fieldHelp.msg}</p> 
+                    {fieldHelp.values.length == 0? <p>Cargando...</p>:
+                    <>
+                    <p>Valores posibles</p>
+                    <p>{fieldHelp.values.map(el => `${el} `)}</p>
+                    </>}
+                </Tooltip>
+            )}
+            </Overlay>
+        </>
+)
+    }
+    else{
+        return(
+            <>
+                <Button
+                    ref={target}
+                    onClick={() => setShow(!show)}
+                    variant="light"
+                    className="d-inline-flex align-items-center"
+                >
+                    <span className="ml-1">{fieldHelp.field}</span>
+                </Button>
+                <Overlay placement="top-end" target={target.current} show={show}>
+                    <Tooltip>{fieldHelp.msg}</Tooltip>
+                </Overlay>
+            </>
+        )
+    }
+}
 
 /**
  * Advanced form for create and update query data.
@@ -16,11 +102,13 @@ import SubsequenceCanvas from "./SubsequenceCanvas"
  * @param ind for spawning more than one advanced search at once
  * @returns 
  */
-const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
+const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
     const [subSearch,setSubSearch] = useState(
         searchQuery.subsequenceQuery !== undefined)
 
-    console.log(searchQuery)
+    const helpList = getHelp(fieldHelp)
+   
+
 
     const removeObjectFromList = (ind,field) => {
         const newSearch = {...searchQuery, [field]: searchQuery[field].filter( (range,index) => index != ind)}
@@ -39,6 +127,7 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
             ...searchQuery, [arrayVal]: newNestedArray
         })
     }
+    
     return(
         <Form>
             <Form.Group controlID="filterField">
@@ -46,9 +135,11 @@ const AdvancedSearch = ({searchQuery,setSearch,ind}) => {
                 <Form.Control type="text"
                             as="textarea"
                             onChange={e => setField('filter',e.target.value)}
-                            defaultValue={searchQuery.filter? searchQuery.filter: "city = 'Granada'"} />
+                            placeholder={searchQuery.filter? searchQuery.filter: "city = 'Granada' AND measure > 8"} />
                 <Form.Text className="text-muted">
-                    Campos disponibles: sensorID, measure, measure_name, unit, name, measure_desc, city, region, country, address, description, tags, lat, long
+                    Campos disponibles: {       
+                        helpList.map( filterHelp => filterHelpOverlay(filterHelp))
+                     }
                 </Form.Text>
             </Form.Group>
             

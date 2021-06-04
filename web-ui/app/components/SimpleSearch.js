@@ -19,8 +19,8 @@ const initialFilter = {
 
 
 
-const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter}) => {
-    const [tagSelect, setTagSelect] = useState("traffic") 
+const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, fieldHelp}) => {
+    const [tagSelect, setTagSelect] = useState(null) 
 
     const setObjectField = (field,value,object,setObject) => {
         setObject({...object, [field] : value})
@@ -44,6 +44,18 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter}) 
         })
     }
 
+    const getFieldHelpList = (field) =>{
+        return ( 
+        fieldHelpList[field].isLoading || fieldHelpList[field].error?
+            <option value="">Cargando...</option> :
+        fieldHelpList[field].fieldList.map( tag =>
+            <option value={tag}>{tag}</option>
+        )
+        )
+    }
+    const fieldHelpList = fieldHelp.fields
+    console.log(fieldHelpList['tags'])
+
     return(
         <Form>
             <Form.Group>
@@ -56,20 +68,16 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter}) 
 
                 <Form.Row className="align-items-center mb-2">
                     <Col xs={11}>
-                        <Form.Control  as="select"  value={tagSelect} 
+                        <Form.Control  as="select"  value={tagSelect}  defaultValue={null}
                             onChange={(e) => setTagSelect(e.target.value)}
                             custom
                         >     
-                                <option value="traffic">traffic</option>
-                                <option value="environment">environment</option>
-                                <option value="smartcity">smartcity</option>
-                                <option value="industry">industry</option>
-                                <option value="noise">noise</option>
-                                <option value="lights">lights</option>
+                                {getFieldHelpList("tags")}
                         </Form.Control>
                     </Col>
                     <Col xs={1}>
                         <Button variant="link"
+                            disabled={simplifiedFilter.tags.length == 0}
                             onPointerDown={(e) => {
                             const newTags = new Set(simplifiedFilter.tags).add(tagSelect)
                             setObjectField('tags',newTags, simplifiedFilter,setSimpFilter)}
@@ -106,75 +114,78 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter}) 
             <Form.Group as={Row} className="justify-content-center">
                 <Form.Label className="pr-0" xs={2} column>Ciudad</Form.Label>
                 <Col className="pr-0" xs={4}>
-                    <Form.Control type="text"
+                    <Form.Control as="select" defaultValue={null}
                         onChange={e => 
                         setObjectField('city',e.target.value, simplifiedFilter, setSimpFilter)}
-                        placeholder="Santander" />
+                        placeholder="Santander">
+                            {getFieldHelpList("cities")}
+                            <option value="none">Cualquiera</option>
+                        </Form.Control>
                 </Col>
                 <Form.Label xs={2} className="pr-0" column>Region</Form.Label>
                 <Col className="pr-0 pl-0" xs={4}>
-                    <Form.Control type="text"
+                    <Form.Control as="select" defaultValue={null}
                         onChange={e => 
-                        setObjectField('region',e.target.value, simplifiedFilter, setSimpFilter)}
-                        placeholder="Cantabria" />
+                        setObjectField('region',e.target.value, simplifiedFilter, setSimpFilter)}>
+                            {getFieldHelpList("regions")}
+                            <option value="none">Cualquiera</option>
+                            
+                        </Form.Control>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
                 <Form.Label className="pr-0" xs={2} column>País</Form.Label>
                 <Col xs={4} className="pr-0" >
-                    <Form.Control type="text"
+                    <Form.Control as="select" defaultValue={null}
                         onChange={e => 
                         setObjectField('country',e.target.value, simplifiedFilter, setSimpFilter)}
-                        placeholder="Spain" />
+                        >
+                            {getFieldHelpList("countries")}
+                            <option value="none">Cualquiera</option>
+                        </Form.Control>
                 </Col>
-                <Form.Label className="pr-0" column>Dirección</Form.Label>
+                <Form.Label className="pr-0" column>Fuente</Form.Label>
                 <Col xs={4} className="pr-0 pl-0">
-                    <Form.Control type="text"
+                    <Form.Control as="select" defaultValue={null}
                         onChange={e => 
-                        setObjectField('address',e.target.value, simplifiedFilter, setSimpFilter)}
-                        placeholder="Calle Manzanares"
-                            />
+                        setObjectField('address',e.target.value, simplifiedFilter, setSimpFilter)}>
+                        {getFieldHelpList("names")}
+                        <option value="none">Cualquiera</option>
+
+                        </Form.Control>
                 </Col>
             </Form.Group>
             
-            <Form.Group as={Row} className="align-items-center">
-                <Form.Label  md="auto" column>Medición</Form.Label>
-                <Col md="auto" className="pr-1 pl-1">
+            <Form.Group as={Row} className="align-items-center justify-content-between">
+                <Form.Label md="auto" className=" pr-1" column>Medición</Form.Label>
+                <Col md="auto" className="pr-1 pl-0">
                     <Form.Control  as="select"  value={simplifiedFilter.measure_name} 
                             onChange={(e) => setObjectField('measure_name',e.target.value, simplifiedFilter, setSimpFilter)}
                             custom
                         > 
-                                <option value={null}>Cualquiera</option>
-                                <option value="ruido">ruido</option>
-                                <option value="luminosidad">luminosidad</option>
-                                <option value="ocupacion">ocupacion</option>
+                            {getFieldHelpList("measure")}
                         </Form.Control>
                 </Col>
-                <Form.Label md="auto" className="pr-1 pl-1" column>Muestreo</Form.Label>
-                <Col md="auto" className="pr-0 pl-1 mt-1">
-                    <Form.Control  as="select"  value={simplifiedFilter.sampling_freq} 
+                <Form.Label md="auto" className="pr-0 pl-1" column>Muestreo</Form.Label>
+                <Col  className="pr-0 pl-1 mt-1">
+                    <Form.Control  type="number"  value={simplifiedFilter.sampling_freq} 
                             onChange={(e) => 
                                 setObjectField('sampling_freq',e.target.value, simplifiedFilter, setSimpFilter)}
-                            custom
+                    
                         > 
-                                <option value={null}>Na</option>
-                                <option value={1}>1</option>
-                                <option value={2}>2</option>
-                                <option value={3}>3</option>
                         </Form.Control>
                 </Col>
                 <Col md="auto" className="pr-0 pl-2 mt-1">
-                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit} 
+                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit}  defaultValue={null}
                             onChange={(e) => setObjectField('sampling_unit',e.target.value, simplifiedFilter, setSimpFilter)}
                             custom
                         > 
-                                <option value={null}>Cualquiera</option>
-                                <option value="minuto">minuto</option>
-                                <option value="segundo">segundo</option>
+                                {getFieldHelpList("sample_units")}
+                                <option value="none">Cualquiera</option>
                         </Form.Control>
                 </Col>
-                <Form.Label md="auto" className="pr-0 " column>Devolver serie</Form.Label>
-                <Col>
+                <Form.Label md="auto" className="pr-0 pl-1" column>Devolver serie</Form.Label>
+                <Col xs={1}>
                     <Form.Check type="checkbox" 
                             checked={searchQuery.timeseries}
                             onChange={() => {
