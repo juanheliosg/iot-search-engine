@@ -14,7 +14,7 @@ export default function (){
                 }
             ],
             "type" : "simple",
-            "filter" : "tags LIKE 'traffic'"
+            "filter" : "tags IN ('traffic')"
         },
         {
             "limit" : 100,
@@ -26,7 +26,7 @@ export default function (){
                 }
             ],
             "type" : "aggregation",
-            "filter" : "tags LIKE 'traffic' AND measure_name = 'ocupation'",
+            "filter" : "tags IN ('traffic') AND measure_name = 'ocupation'",
             "aggregationFilter" : [
                 {
                     "operation": "avg",

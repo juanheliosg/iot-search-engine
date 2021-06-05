@@ -30,23 +30,33 @@ const DateRangeField =  ({endDate, startDate,ind, setRanges}) =>{
                     Desde
                 </Form.Label>
                 <Col md="auto">
-                    <DatePicker className="text-center" selected={startDate} onChange={(date) => setRanges('lowerBound','timeRange',date,ind)} timeInputLabel="Time:"
+                    <DatePicker className="text-center" selected={startDate} onChange={(date) => {
+                        if (date < endDate){
+                            setRanges('lowerBound','timeRange',date,ind)
+                            } 
+                        }
+                    } 
+                    timeInputLabel="Time:"
                     dateFormat="dd/MM/yyyy-HH:mm" locale={es} showTimeInput customInput={<CustomInput />} />
                 </Col>
             </Row>
-         </Form.Group>
+        </Form.Group>
         <Form.Group className="ml-4 pl" controlId="upperBoundField">
             <Row>
                 <Form.Label className="align-self-center" as={Col}>
                     Hasta
                 </Form.Label>
                 <Col md="auto">
-                    <DatePicker className="text-center" selected={endDate} onChange={(date) => setRanges('upperBound','timeRange',date,ind)} timeInputLabel="Time:"
-                        dateFormat="dd/MM/yyyy-HH:mm" locale={es} showTimeInput customInput={<CustomInput />} />
+                    <DatePicker className="text-center" selected={endDate} onChange={(date) =>{
+                        if (date > startDate){
+                            setRanges('upperBound','timeRange',date,ind)} 
+                        }
+                    } timeInputLabel="Time:"
+                            dateFormat="dd/MM/yyyy-HH:mm" locale={es} showTimeInput customInput={<CustomInput />}
+                     />
                 </Col>
-
             </Row>
-    </Form.Group>
+        </Form.Group>
     </>
     )
 }

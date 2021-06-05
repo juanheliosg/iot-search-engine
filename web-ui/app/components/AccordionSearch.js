@@ -36,7 +36,24 @@ const ToggleButton = ({children, eventKey}) => {
 const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
     const [search, setSearch] = useState(initSearch)
     
+    const [validated, setValidated] = useState(false);
+
+    const handleSubmit = (event) => {
+        const form = event.currentTarget;
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+
+        if (searchQuery.subsequenceQuery){
+            if (searchQuery.subsequenceQuery.subsequence.length < 3){
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }
     
+        setValidated(true);
+      };
 
     return(
     <Card key={index} as="article" style={{border: "0px", overflow: "visible"}}>
@@ -61,12 +78,14 @@ const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
         </Card.Header>
         <Accordion.Collapse eventKey={index.toString()}>
             <Card.Body>
+            <Form noValidate validated={validated} onSubmit={handleSubmit}>
                 <AdvancedSearch ind={index} searchQuery={search} setSearch={setSearch} fieldHelp={fieldHelp} />
                 <Form.Row className="justify-content-center mt-1">
-                <Button variant="link">
-                    Buscar
-                </Button>
-            </Form.Row>
+                    <Button variant="link" type="submit">
+                        Buscar
+                    </Button>
+                </Form.Row>
+            </Form>
             </Card.Body>
 
         </Accordion.Collapse>

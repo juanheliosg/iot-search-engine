@@ -129,12 +129,13 @@ const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
     }
     
     return(
-        <Form>
-            <Form.Group controlID="filterField">
+        <>
+            <Form.Group>
                 <Form.Label>Filtro SQL</Form.Label>
                 <Form.Control type="text"
                             as="textarea"
                             onChange={e => setField('filter',e.target.value)}
+                            value={searchQuery.filter}
                             placeholder={searchQuery.filter? searchQuery.filter: "city = 'Granada' AND measure > 8"} />
                 <Form.Text className="text-muted">
                     Campos disponibles: {       
@@ -188,7 +189,7 @@ const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
                             setSubsequence={setField} 
                             />
             }
-        </Form>
+        </>
     )
 }
 

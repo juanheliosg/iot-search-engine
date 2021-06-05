@@ -3,6 +3,7 @@ import { Form, Button } from "react-bootstrap"
 import sub from 'date-fns/sub'
 import AdvancedSearch from "./AdvancedSearch"
 import SimpleSearch from "./SimpleSearch"
+import Link from "next/link"
 
 const initialQuery = {
     "limit": 100,
@@ -28,6 +29,7 @@ const initialFilter = {
     "sampling_freq": null
 }
 
+
 /**
  * Component wrapper for a simple and advanced search.
  * This component holds the state of the query
@@ -38,20 +40,41 @@ const GenericSearch = ({fieldHelp}) => {
     const [simpleSearch, setSimpleSearch] = useState(true)
     const [searchQuery, setSearch] = useState(initialQuery)
     const [simplifiedFilter, setSimpFilter] = useState(initialFilter)
+    const [validated, setValidated] = useState(false);
+
+    const handleSubmit = (event) => {
+        const form = event.currentTarget;
+        
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        else if (searchQuery.subsequenceQuery){
+            if (searchQuery.subsequenceQuery.subsequence.length < 3){
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }
+        else{
+            simpToNormalSearch(simplifiedFilter)
+        }
+
+    
+        setValidated(true);
+      };
+
 
 
     const simpToNormalSearch = (simplifiedSearch) => {
         let sqlFilter = ""
-        console.log(simplifiedSearch)
         for (const key in simplifiedSearch){
             if (simplifiedSearch[key] ){
-                if (sqlFilter !== ""){
+                if (sqlFilter !== "" && simplifiedSearch[key] !== "none" ){
                     sqlFilter = sqlFilter.concat( " AND ")
                 }
                 if (key == 'tags')
-                {   if (simplifiedSearch.tags > 0){
+                {   if (simplifiedSearch.tags.size > 0){
                     const tags = [...simplifiedSearch[key]]
-                    console.log(tags)
                     sqlFilter = sqlFilter.concat(` tags IN ('${tags.join("','")}')`)
                     }
                 }
@@ -71,7 +94,7 @@ const GenericSearch = ({fieldHelp}) => {
     } 
 
     return(
-        <>
+        <Form noValidate validated={validated} onSubmit={handleSubmit}>
         {simpleSearch?<SimpleSearch
                         fieldHelp={fieldHelp}
                         searchQuery={searchQuery}
@@ -101,11 +124,13 @@ const GenericSearch = ({fieldHelp}) => {
         }
 
         <Form.Row className="justify-content-center mt-1 mb-4">
-            <Button variant="link">
-                Buscar
-            </Button>
+            <Link href={{pathname: "/search", query:{query: searchQuery}}}>
+                <Button type="submit" variant="link">
+                    Buscar
+                </Button>
+            </Link>
         </Form.Row>
-        </>
+        </Form>
     )
 }
 

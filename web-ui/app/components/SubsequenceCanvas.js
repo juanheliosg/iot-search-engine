@@ -9,14 +9,6 @@ const DynamicPlot = dynamic(() => import(
     {ssr: false})
 
 
-const getStandardDeviation = (array) => {
-        const n = array.length
-        const mean = array.reduce((a, b) => a + b) / n
-        return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
-      }
-
-const getAverage = (array) => array.reduce((a, b) => a + b) / array.length;
-
 /**
 * Plotly chart wrapper with functionality for adding and removing points  
 * @param {subsequence, setSubsequence} subsequence to be send and function for setting the subsequence in the query
@@ -40,16 +32,23 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
                 let jsonParse = JSON.parse(textFromFileLoaded)
                 if (jsonParse.hasOwnProperty('subsequence')){
                     let values = jsonParse['subsequence']
+                    if (values.length > 3 ){
                     //Aplicamos normalización min-max para poder meterlo bien en el gráfico
                     //Esto no debería de afectar a la búsqueda por que en esta aplcian antes una z-normalizacion
-                    let max = Math.max(...values)
-                    let min = Math.min(...values)
-                    let normalized_values = values.map(el => (el-min)/(max-min))
-                    setSubsequence('subsequenceQuery',{subsequence: normalized_values})
-                    setValidFile({msg: `Archivo ${fileToRead.name} cargado `,valid: true})
+                        let max = Math.max(...values)
+                        let min = Math.min(...values)
+                        let normalized_values = values.map(el => (el-min)/(max-min))
+                        setSubsequence('subsequenceQuery',{subsequence: normalized_values})
+                        setValidFile({msg: `Archivo ${fileToRead.name} cargado `,valid: true})
+                    }
+                    else{
+                        setValidFile({msg: `Campo subsequence no encontrado en ${fileToRead.name}`, valid: false})
+                    }
+
+
                 }
                 else{
-                    setValidFile({msg: `Campo subsequence no encontrado en ${fileToRead.name}`, valid: false})
+                    setValidFile({msg: `Campo subsequence debería de tener al menos 3 valores${fileToRead.name}`, valid: false})
                 }
             }catch(error){
                 console.log(error)
@@ -134,6 +133,7 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
                 </Form.File>
             </Col>
         </Row>
+    
         <Form.Row>
         <Form.Group as={Row} className="ml-1">
             <Form.Label>
@@ -167,10 +167,13 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
         </Form.Group>
         <Col>
             <Form.Text className="text-muted pt-0 mt-0">
-            O añade puntos para reflejar la forma de la subsecuencia que quieres
+            Añade puntos para reflejar la forma de la subsecuencia que quieres. Pon al menos tres
             </Form.Text>
         </Col>
     </Form.Row>
+    {
+        subsequence.length < 3 && <Form.Row className="mb-1"><Form.Text className="text-danger">Pon al menos 3 puntos en la subsecuencia</Form.Text></Form.Row>
+        }
 
 
     

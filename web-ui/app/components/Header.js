@@ -5,8 +5,8 @@ const Header = () => {
     return(
         <Container as="header" className="mb-3" style = {{maxWidth: "800px"}}>
             <Row className="justify-content-center">
-                <Col md="auto" className="align-items-center mt-3">
-                    <Image src="/logo.svg" width={100} height={100}/>          
+                <Col className="justify-content-center d-flex mt-3">
+                    <Image src="/logo.svg" width={100} height={100} />
                 </Col>
             </Row>
             <Row className="justify-content-center">

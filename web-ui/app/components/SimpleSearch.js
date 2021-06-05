@@ -20,7 +20,10 @@ const initialFilter = {
 
 
 const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, fieldHelp}) => {
-    const [tagSelect, setTagSelect] = useState(null) 
+
+    const fieldHelpList = fieldHelp.fields
+
+    const [tagSelect, setTagSelect] = useState("none") 
 
     const setObjectField = (field,value,object,setObject) => {
         setObject({...object, [field] : value})
@@ -53,11 +56,10 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
         )
         )
     }
-    const fieldHelpList = fieldHelp.fields
-    console.log(fieldHelpList['tags'])
+
 
     return(
-        <Form>
+        <>
             <Form.Group>
                 <Form.Row className="align-items-center mb-2">
                     <Form.Label className="mb-0">Tags</Form.Label>
@@ -68,19 +70,22 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
 
                 <Form.Row className="align-items-center mb-2">
                     <Col xs={11}>
-                        <Form.Control  as="select"  value={tagSelect}  defaultValue={null}
+                        <Form.Control  as="select"  value={tagSelect}
                             onChange={(e) => setTagSelect(e.target.value)}
                             custom
                         >     
                                 {getFieldHelpList("tags")}
+                                <option value="none">Cualquiera</option>
                         </Form.Control>
                     </Col>
                     <Col xs={1}>
                         <Button variant="link"
                             disabled={simplifiedFilter.tags.length == 0}
                             onPointerDown={(e) => {
-                            const newTags = new Set(simplifiedFilter.tags).add(tagSelect)
-                            setObjectField('tags',newTags, simplifiedFilter,setSimpFilter)}
+                                if(tagSelect !== "none"){
+                                    const newTags = new Set(simplifiedFilter.tags).add(tagSelect)
+                                    setObjectField('tags',newTags, simplifiedFilter,setSimpFilter)}
+                            }
                             } 
                             >
                                 <PlusCircleFill />
@@ -114,7 +119,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
             <Form.Group as={Row} className="justify-content-center">
                 <Form.Label className="pr-0" xs={2} column>Ciudad</Form.Label>
                 <Col className="pr-0" xs={4}>
-                    <Form.Control as="select" defaultValue={null}
+                    <Form.Control as="select" defaultValue="none"
                         onChange={e => 
                         setObjectField('city',e.target.value, simplifiedFilter, setSimpFilter)}
                         placeholder="Santander">
@@ -124,7 +129,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                 </Col>
                 <Form.Label xs={2} className="pr-0" column>Region</Form.Label>
                 <Col className="pr-0 pl-0" xs={4}>
-                    <Form.Control as="select" defaultValue={null}
+                    <Form.Control as="select" defaultValue="none"
                         onChange={e => 
                         setObjectField('region',e.target.value, simplifiedFilter, setSimpFilter)}>
                             {getFieldHelpList("regions")}
@@ -136,7 +141,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
             <Form.Group as={Row}>
                 <Form.Label className="pr-0" xs={2} column>País</Form.Label>
                 <Col xs={4} className="pr-0" >
-                    <Form.Control as="select" defaultValue={null}
+                    <Form.Control as="select" defaultValue="none"
                         onChange={e => 
                         setObjectField('country',e.target.value, simplifiedFilter, setSimpFilter)}
                         >
@@ -146,7 +151,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                 </Col>
                 <Form.Label className="pr-0" column>Fuente</Form.Label>
                 <Col xs={4} className="pr-0 pl-0">
-                    <Form.Control as="select" defaultValue={null}
+                    <Form.Control as="select" defaultValue="none"
                         onChange={e => 
                         setObjectField('address',e.target.value, simplifiedFilter, setSimpFilter)}>
                         {getFieldHelpList("names")}
@@ -164,6 +169,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                             custom
                         > 
                             {getFieldHelpList("measure")}
+                            <option value="none">Cualquiera</option>
                         </Form.Control>
                 </Col>
                 <Form.Label md="auto" className="pr-0 pl-1" column>Muestreo</Form.Label>
@@ -176,7 +182,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                         </Form.Control>
                 </Col>
                 <Col md="auto" className="pr-0 pl-2 mt-1">
-                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit}  defaultValue={null}
+                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit}  defaultValue="none"
                             onChange={(e) => setObjectField('sampling_unit',e.target.value, simplifiedFilter, setSimpFilter)}
                             custom
                         > 
@@ -203,7 +209,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
             <AggregationField aggFields={searchQuery.aggregationFilter} setAggField={setObjectArrayField} 
                                 removeAggField={removeObjectFromList} setNewAgg={setField}
             />
-        </Form>
+        </>
 
     )
 }
