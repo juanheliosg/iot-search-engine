@@ -3,7 +3,7 @@ import Header from '../app/components/Header'
 import getSearchExamples from '../app/examples/Searchs'
 import AccordionSearch from '../app/components/AccordionSearch'
 import GenericSearch from '../app/components/GenericSearch'
-
+import reformatRange from '../app/utils/ReformatRange'
 
 
 
@@ -11,10 +11,17 @@ export default function Home({fields}) {
   
   const searchExamples = getSearchExamples()
   let searches = []
-  if (typeof window !== "undefined"){
-    searches = JSON.parse(localStorage.getItem("recentSearches"))
+  if (typeof window !== "undefined"){ 
+    let rawSearches = JSON.parse(localStorage.getItem("recentSearch"))
+    
+    if (rawSearches){
+      console.log(rawSearches)
+      searches = rawSearches.map(queryObj => 
+        {return {...queryObj.search, timeRange: [...queryObj.search.timeRange].map(range => reformatRange(range) )}}
+      )
+    }
+
   }
-  
 
   if (!searches){
     searches = searchExamples

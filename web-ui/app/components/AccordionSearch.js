@@ -4,8 +4,11 @@ import AdvancedSearch from './AdvancedSearch'
 import { useState} from 'react'
 import { useAccordionToggle } from 'react-bootstrap/AccordionToggle';
 import Search from './icons/Search'
+import Archive from './icons/Archive'
 import Link from 'next/link'
+import { urlObjectKeys } from 'next/dist/next-server/lib/utils';
 
+var hash = require('object-hash');
 /**
  * Custom toggle button for displaying the advanced search
  * @param children children props for customization
@@ -34,7 +37,7 @@ const ToggleButton = ({children, eventKey}) => {
  * @param {index} 
  * @returns 
  */
-const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
+const AccordionSearch = ({initSearch,index, fieldHelp, save}) =>{
 
     const [search, setSearch] = useState(initSearch)
     const [validated, setValidated] = useState(false);
@@ -54,6 +57,34 @@ const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
         
         setValidated(true);
       };
+    const saveSearch = () => {
+        let previousSearch = JSON.parse(
+            localStorage.getItem("recentSearch"))
+
+        let searchHash = hash(search)
+        if (previousSearch){
+            let previousExistence = previousSearch.map(obj => obj.hash).includes(searchHash)
+            if (!previousExistence){
+                let newSearch = previousSearch.map(obj => {return{...obj, submitDate: Date.parse(obj.submitDate)}})
+                newSearch.push({hash: searchHash ,  search: search, submitDate: (new Date ()).getTime()})
+                
+                newSearch.sort( (a,b) =>    b.submitDate - a.submitDate)
+                console.log(newSearch)
+                newSearch = newSearch.slice(0,process.env.NEXT_PUBLIC_SAVED_QUERIES)
+                localStorage.setItem("recentSearch", JSON.stringify(Array.from(newSearch)))
+            }
+        }
+        else{
+            localStorage.setItem("recentSearch", JSON.stringify([
+                {hash: searchHash ,  search: search, submitDate: new Date}
+            ]))
+        }
+
+
+        
+        
+
+    }
    
     return(
     <Card key={index} as="article" style={{border: "0px", overflow: "visible"}}>
@@ -71,11 +102,18 @@ const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
                 </Col>
             </Row>
             <Row className="justify-content-end">
-                <Col xs={2} className="ml-0 pr-0" >
+                { save && <Col className="ml-0 pr-0" xs={2}>
+                    <Button variant="link" onClick={ () => saveSearch()} >
+                        Guardar <Archive />
+                    </Button>
+
+                </Col>}
+                <Col xs={2} className="ml-0 pr-0 d-flex align-items-center" >
                     <ToggleButton eventKey={index.toString()}>
-                        <p className="text-primary pb-0">Editar</p>
+                        <p className="text-primary mb-0 align-self-center">Editar</p>
                     </ToggleButton>
                 </Col>
+
             </Row>
         </Card.Header>
         <Accordion.Collapse eventKey={index.toString()}>
@@ -95,5 +133,8 @@ const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
         </Accordion.Collapse>
     </Card>
     )
+}
+AccordionSearch.defaultProps = {
+    save: false
 }
 export default AccordionSearch

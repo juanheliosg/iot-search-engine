@@ -5,33 +5,8 @@ import AccordionSearch from "../app/components/AccordionSearch";
 import { useEffect, useState } from "react";
 import SearchResults from "../app/components/SearchResults";
 import Image from 'next/image'
-import Link from 'next/link'
+import reformatRange from '../app/utils/ReformatRange'
 
-/**
- * Transform a range from epochSeconds or string to JS date if is not in date string format
- * @param {range} range  
- */
-const reformatRange = (range) => {
-    if (range['lowerBound'] instanceof Date && range['upperBound'] instanceof Date ){
-        return range
-    }
-    else{
-        let lowerBound = Date.parse(range['lowerBound'])
-        let upperBound =  Date.parse(range['upperBound'])
-        //por algun motivo JS parse los Date strings a second epoch
-        //Por eso hay que hacer de nuevo la conversión. 
-        if (typeof lowerBound == "number"){
-            lowerBound = new Date(range['lowerBound'])
-        }
-        if (typeof upperBound == "number"){
-            upperBound = new Date(range['upperBound'])
-        }
-        
-        return {lowerBound: lowerBound, 
-            upperBound: upperBound
-        }
-    }
-}
 
 const SearchHeader = ({isLoading}) => {
     return(
@@ -84,7 +59,7 @@ const Search = ({ fields}) => {
             <SearchHeader  isLoading={res.isLoading}/>
             {editableQueryObj && <Accordion className="ml-4"  as="section" >
             <Row><p className="font-weight-bold">Consulta</p></Row>
-                <AccordionSearch initSearch={editableQueryObj} fieldHelp={fields} index={1} />
+                <AccordionSearch initSearch={editableQueryObj} fieldHelp={fields} index={1} save={true} />
             </Accordion>}
             {res.data !== null && 
             <SearchResults res={res}

@@ -40,7 +40,13 @@ const useQuery = (payload, setRes) => {
     axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/query`,payload).then(res => {
             setRes({data: res.data, isLoading: false, error: null});
          }).catch((error) => {
-            setRes({data: error.response.data, isLoading: false, error});
+             if (error.response){
+                setRes({data: error.response.data, isLoading: false, error});
+             }else{
+                setRes({data: [{error:"Timeout limita más el numero de series", 
+                errorMsg: "Timeout error"}], isLoading: false, error});
+             }
+            
          })
 }
 

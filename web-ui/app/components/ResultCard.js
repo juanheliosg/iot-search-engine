@@ -93,6 +93,8 @@ const ResultCard = ({serie,subLen}) =>{
                 }
 
                 
+
+                
             </Card.Body>
         </Card>
 

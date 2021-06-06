@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Form, Button } from "react-bootstrap"
 import sub from 'date-fns/sub'
 import AdvancedSearch from "./AdvancedSearch"
@@ -20,12 +20,12 @@ const initialQuery = {
 
 const initialFilter = {
     "tags": new Set(),
-    "city": null,
-    "region": null,
-    "country": null,
-    "address": null,
-    "measure_name": null,
-    "sampling_unit": null,
+    "city": "none",
+    "region": "none",
+    "country": "none",
+    "names": "none",
+    "measure_name": "none",
+    "sampling_unit": "none",
     "sampling_freq": null
 }
 
@@ -42,6 +42,7 @@ const GenericSearch = ({fieldHelp}) => {
     const [simplifiedFilter, setSimpFilter] = useState(initialFilter)
     const [validated, setValidated] = useState(false);
 
+
     const handleSubmit = (event) => {
         const form = event.currentTarget;
         
@@ -54,9 +55,6 @@ const GenericSearch = ({fieldHelp}) => {
                 event.preventDefault();
                 event.stopPropagation();
             }
-        }
-        else{
-            simpToNormalSearch(simplifiedFilter)
         }
 
         if (searchQuery.subsequenceQuery){
@@ -97,8 +95,9 @@ const GenericSearch = ({fieldHelp}) => {
         setSearch({
             ...searchQuery, filter: sqlFilter
         })
-
-    } 
+    }
+    
+    useEffect(() => simpToNormalSearch(simplifiedFilter), [simplifiedFilter])
 
     return(
         <Form noValidate validated={validated} onSubmit={handleSubmit}>

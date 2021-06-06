@@ -5,16 +5,7 @@ import DashCircleFill from "./icons/Minus"
 import AggregationField from "./AggregationField"
 import DateRangeComponent from './DateRangeComponent'
 
-const initialFilter = {
-    "tags": new Set(),
-    "city": "none",
-    "region": "none",
-    "country": "none",
-    "address": "none",
-    "measure_name": "none",
-    "sampling_unit": "none",
-    "sampling_freq": null
-}
+
 
 
 
@@ -153,7 +144,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                 <Col xs={4} className="pr-0 pl-0">
                     <Form.Control as="select" value={simplifiedFilter.name}
                         onChange={e => 
-                        setObjectField('address',e.target.value, simplifiedFilter, setSimpFilter)}>
+                        setObjectField('name',e.target.value, simplifiedFilter, setSimpFilter)}>
                         {getFieldHelpList("names")}
                         <option value="none">Cualquiera</option>
 
@@ -182,7 +173,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                         </Form.Control>
                 </Col>
                 <Col md="auto" className="pr-0 pl-2 mt-1">
-                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit}  value={simplifiedFilter.sampling_unit}
+                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit}
                             onChange={(e) => setObjectField('sampling_unit',e.target.value, simplifiedFilter, setSimpFilter)}
                             custom
                         > 

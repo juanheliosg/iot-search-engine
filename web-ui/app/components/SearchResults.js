@@ -1,4 +1,4 @@
-import { Badge, Row, Container, Pagination } from "react-bootstrap"
+import { Col, Row, Container, Pagination } from "react-bootstrap"
 import ResultCard from "./ResultCard"
 import { useState } from 'react'
 
@@ -7,6 +7,7 @@ const ErrorList = ({errors}) => {
     let errorsSet = new Set(errors)
     return(
         [...errorsSet].map( er => {
+            console.log(er)
             return(
                 <h5 className="ml-4 mt-4" >Error: {er.error} </h5>
             )
@@ -35,11 +36,9 @@ const ResultsList = ({res, subLen}) => {
 
     let series = [...res.series]
     if (subLen > 0 && series){
-        console.log("we")
         series.sort((a,b) =>    Math.min(...(a.subsequences.map(el => el.ed))) - 
                                 Math.min(...(b.subsequences.map( el => el.ed))
                                 ))
-        console.log(series)
     }
     
 
@@ -50,8 +49,10 @@ const ResultsList = ({res, subLen}) => {
 
     return(
     <>
-        <Row className="mt-4">
-            <p className="font-weight-bold">Series recuperadas: {res.items}</p>
+        <Row className="ml-0 mt-4">
+            <Col>
+                <p className="font-weight-bold">Series recuperadas: {res.items}</p>
+            </Col>
         </Row>
         { series && <Container as="section" fluid>
             {series.map(serie => 
