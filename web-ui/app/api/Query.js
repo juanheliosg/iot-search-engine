@@ -1,9 +1,13 @@
 import useSWR from 'swr'
+import axios from 'axios'
+import {useState} from 'react'
+import {useCallback} from 'react'
+
+
 const fetcher = url => fetch(url).then(res=> res.json())
 
 const useField = (field) => {
     const getFieldList = (data) => {
-        console.log(data)
         return data.count.map(el => el.name)
     }
 
@@ -25,20 +29,20 @@ const useFields = () => {
 }
 
 /**
- * const useQuery = (query) => {
-    //Hasheamos la query para hacer que la caché pueda funcionar bien
-    //
-    const {data, error} = useSWR(`/v1/query/${hash(query)}`, postQuery(query))
-    return {
-        results: data,
-        isLoading: !error && !data,
-        isError: error 
-    }
+ * Post hook
+ * @param query to be send to the url
+ * @returns 
+ */
 
+const useQuery = (payload, setRes) => {
+    setRes({data: null, error: null, isLoading: true})
+    
+    axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/query`,payload).then(res => {
+            setRes({data: res.data, isLoading: false, error: null});
+         }).catch((error) => {
+            setRes({data: error.response.data, isLoading: false, error});
+         })
 }
-*/
-const useQuery = (query) =>{
-    return "a"
-}
+
 
 export { useFields , useQuery }

@@ -27,6 +27,7 @@ const DateRangeComponent = ({searchQuery, setSearch, removeObjectFromList, setOb
                 <DateRangeField startDate={range.lowerBound}
                             endDate={range.upperBound}
                             ind={index}
+                            key={index}
                             setRanges={setObjectArrayField}
                             />
                 { index > 0?

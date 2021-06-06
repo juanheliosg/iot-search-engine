@@ -33,7 +33,6 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
             newAggFields =[newAgg]
         }
         
-        console.log(newAggFields)
         setNewAgg('aggregationFilter',newAggFields)
     }
      

@@ -4,6 +4,7 @@ import AdvancedSearch from './AdvancedSearch'
 import { useState} from 'react'
 import { useAccordionToggle } from 'react-bootstrap/AccordionToggle';
 import Search from './icons/Search'
+import Link from 'next/link'
 
 /**
  * Custom toggle button for displaying the advanced search
@@ -34,27 +35,26 @@ const ToggleButton = ({children, eventKey}) => {
  * @returns 
  */
 const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
+
     const [search, setSearch] = useState(initSearch)
-    
     const [validated, setValidated] = useState(false);
 
     const handleSubmit = (event) => {
         const form = event.currentTarget;
         if (form.checkValidity() === false) {
-          event.preventDefault();
-          event.stopPropagation();
+            event.preventDefault();
+            event.stopPropagation();
         }
-
-        if (searchQuery.subsequenceQuery){
-            if (searchQuery.subsequenceQuery.subsequence.length < 3){
-                event.preventDefault();
-                event.stopPropagation();
-            }
-        }
-    
+        else if (searchQuery.subsequenceQuery){
+              if (searchQuery.subsequenceQuery.subsequence.length < 3){
+                  event.preventDefault();
+                  event.stopPropagation();
+              }
+          }
+        
         setValidated(true);
       };
-
+   
     return(
     <Card key={index} as="article" style={{border: "0px", overflow: "visible"}}>
         <Card.Header className="pt-1 pb-0" style={{backgroundColor: "rgba(0,0,0,0)"}}>
@@ -63,9 +63,11 @@ const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
                     <SearchSummary search={search} />
                 </Col>
                 <Col xs={2} className="ml-0 pr-0">
-                    <Button variant="link" href="/results">
-                        <Search />
-                    </Button>
+                    <Link href={{pathname: "/search", query: { query: JSON.stringify(search)}}}>
+                        <Button variant="link">
+                            <Search />
+                        </Button>
+                    </Link>
                 </Col>
             </Row>
             <Row className="justify-content-end">
@@ -81,9 +83,11 @@ const AccordionSearch = ({initSearch,index, fieldHelp}) =>{
             <Form noValidate validated={validated} onSubmit={handleSubmit}>
                 <AdvancedSearch ind={index} searchQuery={search} setSearch={setSearch} fieldHelp={fieldHelp} />
                 <Form.Row className="justify-content-center mt-1">
-                    <Button variant="link" type="submit">
+                    <Link href={{pathname: "/search", query: { query: JSON.stringify(search)}}}>
+                        <Button type="submit" variant="link">
                         Buscar
-                    </Button>
+                       </Button>
+                    </Link>
                 </Form.Row>
             </Form>
             </Card.Body>

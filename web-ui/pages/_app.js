@@ -1,11 +1,12 @@
 import Footer from '../app/components/Footer'
 import Head from 'next/head'
 import '../styles/globals.css'
+import {useFields} from '../app/api/Query'
 import "react-datepicker/dist/react-datepicker.css"
 
 function MyApp({ Component, pageProps }) {
   
-
+  const fields = useFields()
   return (
   <div className="flex-wrapper">
     <Head>
@@ -19,7 +20,7 @@ function MyApp({ Component, pageProps }) {
         crossOrigin="anonymous"
       />
     </Head>
-      <Component {...pageProps} />
+      <Component {...pageProps} fields={fields} />
     <Footer />
   </div>
 

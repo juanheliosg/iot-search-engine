@@ -45,6 +45,7 @@ const getSearchSummaryText = (search) => {
         .replace(":","=")
         .replace("OR", "o")
         .replace("LIKE", "parecidos a")
+        .replace("IN", "dentro de")
 
        
 

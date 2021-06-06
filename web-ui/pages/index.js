@@ -1,13 +1,13 @@
-import { Accordion, AccordionCollapse, Card, Container,Row,Col, Button } from 'react-bootstrap'
+import { Accordion, Container } from 'react-bootstrap'
 import Header from '../app/components/Header'
 import getSearchExamples from '../app/examples/Searchs'
 import AccordionSearch from '../app/components/AccordionSearch'
 import GenericSearch from '../app/components/GenericSearch'
-import { useFields } from '../app/api/Query'
 
 
 
-export default function Home() {
+
+export default function Home({fields}) {
   
   const searchExamples = getSearchExamples()
   let searches = []
@@ -22,11 +22,10 @@ export default function Home() {
   else if ( searches && searches.length < 3) {
     searches = searches.concat(searchExamples.slice(0,searchExamples.length - searches.length))
   }
-  const fields = useFields()
+  
 
   return (
     <>
-    <h1></h1>
       <Header />
       <Container fluid style={{maxWidth: "800px"}} as="main">
         <Container as="section">

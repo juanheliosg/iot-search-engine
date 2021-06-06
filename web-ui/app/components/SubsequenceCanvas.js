@@ -24,7 +24,6 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
         const fileToRead = e.target.files[0]
         const fileReader = new FileReader()
 
-        console.log(fileToRead)
         fileReader.addEventListener('load', (fileLoadedEvent) => {
             const textFromFileLoaded = fileLoadedEvent.target.result
 
@@ -51,7 +50,7 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
                     setValidFile({msg: `Campo subsequence debería de tener al menos 3 valores${fileToRead.name}`, valid: false})
                 }
             }catch(error){
-                console.log(error)
+                
                 setValidFile({msg:`No se ha podido parsear ${fileToRead.name}, comprueba el formato`,valid: false})
             }
           }) //la lectura es asíncrona
@@ -108,7 +107,7 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
 
     const removePoint = (data) => {
         
-        console.log(data)
+        
         if (data.points){
             const newSubsequence = [...subsequence]
             data.points.forEach( (p) => newSubsequence.splice(p.x,1))
@@ -118,7 +117,7 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
 
     }
 
-    console.log(fileVal)
+
     return(
     <>
         <Row className="mb-3">

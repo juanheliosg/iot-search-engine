@@ -59,6 +59,13 @@ const GenericSearch = ({fieldHelp}) => {
             simpToNormalSearch(simplifiedFilter)
         }
 
+        if (searchQuery.subsequenceQuery){
+            setSearch({...searchQuery, type: "complex"})
+        }
+        else if (searchQuery.aggregationFilter){
+            setSearch({...searchQuery, type: "aggregation"})
+        }
+
     
         setValidated(true);
       };
@@ -124,7 +131,7 @@ const GenericSearch = ({fieldHelp}) => {
         }
 
         <Form.Row className="justify-content-center mt-1 mb-4">
-            <Link href={{pathname: "/search", query:{query: searchQuery}}}>
+            <Link href={{pathname: "/search",  query: { query: JSON.stringify(searchQuery)}}}>
                 <Button type="submit" variant="link">
                     Buscar
                 </Button>

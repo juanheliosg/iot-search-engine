@@ -178,13 +178,13 @@ const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
                             onChange={() => {
                                 setField('timeseries', true)
                                 setSubSearch(!subSearch)
-                                if (!subSearch)
+                                if (!subSearch || searchQuery.timeseries == false)
                                     setField('subsequenceQuery',undefined)
                                 }} />
                     </Col>
                 </Form.Group>
             </Form.Row>
-            {subSearch && <SubsequenceCanvas ind={ind}subsequence={searchQuery.subsequenceQuery?
+            {subSearch && <SubsequenceCanvas subsequence={searchQuery.subsequenceQuery?
                             searchQuery.subsequenceQuery.subsequence : []}
                             setSubsequence={setField} 
                             />
