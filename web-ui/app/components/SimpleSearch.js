@@ -7,12 +7,12 @@ import DateRangeComponent from './DateRangeComponent'
 
 const initialFilter = {
     "tags": new Set(),
-    "city": null,
-    "region": null,
-    "country": null,
-    "address": null,
-    "measure_name": null,
-    "sampling_unit": null,
+    "city": "none",
+    "region": "none",
+    "country": "none",
+    "address": "none",
+    "measure_name": "none",
+    "sampling_unit": "none",
     "sampling_freq": null
 }
 
@@ -119,7 +119,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
             <Form.Group as={Row} className="justify-content-center">
                 <Form.Label className="pr-0" xs={2} column>Ciudad</Form.Label>
                 <Col className="pr-0" xs={4}>
-                    <Form.Control as="select" defaultValue="none"
+                    <Form.Control as="select" value={simplifiedFilter.city}
                         onChange={e => 
                         setObjectField('city',e.target.value, simplifiedFilter, setSimpFilter)}
                         placeholder="Santander">
@@ -129,7 +129,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                 </Col>
                 <Form.Label xs={2} className="pr-0" column>Region</Form.Label>
                 <Col className="pr-0 pl-0" xs={4}>
-                    <Form.Control as="select" defaultValue="none"
+                    <Form.Control as="select" value={simplifiedFilter.region}
                         onChange={e => 
                         setObjectField('region',e.target.value, simplifiedFilter, setSimpFilter)}>
                             {getFieldHelpList("regions")}
@@ -141,7 +141,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
             <Form.Group as={Row}>
                 <Form.Label className="pr-0" xs={2} column>País</Form.Label>
                 <Col xs={4} className="pr-0" >
-                    <Form.Control as="select" defaultValue="none"
+                    <Form.Control as="select" value={simplifiedFilter.country}
                         onChange={e => 
                         setObjectField('country',e.target.value, simplifiedFilter, setSimpFilter)}
                         >
@@ -151,7 +151,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                 </Col>
                 <Form.Label className="pr-0" column>Fuente</Form.Label>
                 <Col xs={4} className="pr-0 pl-0">
-                    <Form.Control as="select" defaultValue="none"
+                    <Form.Control as="select" value={simplifiedFilter.name}
                         onChange={e => 
                         setObjectField('address',e.target.value, simplifiedFilter, setSimpFilter)}>
                         {getFieldHelpList("names")}
@@ -182,7 +182,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                         </Form.Control>
                 </Col>
                 <Col md="auto" className="pr-0 pl-2 mt-1">
-                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit}  defaultValue="none"
+                    <Form.Control  as="select"  value={simplifiedFilter.sampling_unit}  value={simplifiedFilter.sampling_unit}
                             onChange={(e) => setObjectField('sampling_unit',e.target.value, simplifiedFilter, setSimpFilter)}
                             custom
                         > 

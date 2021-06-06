@@ -23,7 +23,7 @@ const DateRangeComponent = ({searchQuery, setSearch, removeObjectFromList, setOb
     <>
     {searchQuery.timeRange.map((range, index) => {
         return(
-            <Form.Row className="justify-content-center">
+            <Form.Row key={index} className="justify-content-center">
                 <DateRangeField startDate={range.lowerBound}
                             endDate={range.upperBound}
                             ind={index}

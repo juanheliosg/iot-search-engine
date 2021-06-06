@@ -1,9 +1,8 @@
-import { Form, Col, Row, Button, Overlay, Tooltip } from "react-bootstrap"
-import sub from 'date-fns/sub'
+import { Form, Col, Row, Button, Container, Overlay, Tooltip } from "react-bootstrap"
+
 
 import DateRangeComponent from './DateRangeComponent'
 import AggregationField from "./AggregationField"
-import PropTypes from 'prop-types';
 import { useRef, useState } from "react"
 import SubsequenceCanvas from "./SubsequenceCanvas"
 
@@ -43,7 +42,7 @@ const getHelp = (fieldHelpList) => {
 }
 
 
-const filterHelpOverlay = (fieldHelp) => {
+const filterHelpOverlay = (fieldHelp, key) => {
     //diferenciar entre los que tienen información de campos y los que no
     //dar ayuda de los que no
     //hacer un filter fields objecto con la ayuda para cada uno e iterar a partir de ahí
@@ -52,7 +51,7 @@ const filterHelpOverlay = (fieldHelp) => {
     const target = useRef(null)
     if (fieldHelp.values !== undefined){
         return(
-        <>
+        <span key={key}>
             <Button
                 ref={target}
                 onClick={() => setShow(!show)}
@@ -73,12 +72,12 @@ const filterHelpOverlay = (fieldHelp) => {
                 </Tooltip>
             )}
             </Overlay>
-        </>
+        </span>
 )
     }
     else{
         return(
-            <>
+            <span key={key}>
                 <Button
                     ref={target}
                     onClick={() => setShow(!show)}
@@ -90,7 +89,7 @@ const filterHelpOverlay = (fieldHelp) => {
                 <Overlay placement="top-end" target={target.current} show={show}>
                     <Tooltip>{fieldHelp.msg}</Tooltip>
                 </Overlay>
-            </>
+            </span>
         )
     }
 }
@@ -139,7 +138,7 @@ const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
                             placeholder={searchQuery.filter? searchQuery.filter: "city = 'Granada' AND measure > 8"} />
                 <Form.Text className="text-muted">
                     Campos disponibles: {       
-                        helpList.map( filterHelp => filterHelpOverlay(filterHelp))
+                        helpList.map( (filterHelp,ind) => filterHelpOverlay(filterHelp, ind))
                      }
                 </Form.Text>
             </Form.Group>
@@ -191,30 +190,6 @@ const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
             }
         </>
     )
-}
-
-AdvancedSearch.propTypes = {
-    initSearchQuery :PropTypes.shape({
-        limit: PropTypes.number.isRequired,
-        timeseries: PropTypes.bool.isRequired,
-        timeRange: PropTypes.arrayOf(PropTypes.shape({
-            lowerBound: PropTypes.date,
-            upperBound: PropTypes.date
-            }
-        )).isRequired,
-        type: PropTypes.string.isRequired,
-        filter: PropTypes.string.isRequired,
-        subsequenceQuery: PropTypes.shape({
-            subsequence: PropTypes.arrayOf(PropTypes.number)
-        }),
-        aggregationFilter: PropTypes.arrayOf(PropTypes.shape({
-            operation: PropTypes.string,
-            aggComparation: PropTypes.string,
-            value: PropTypes.number,
-            relation: PropTypes.string
-            }
-        ))
-    })
 }
 
 

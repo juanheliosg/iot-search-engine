@@ -88,7 +88,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
             {
                 aggFields && aggFields.map( (agg,ind) => {
                     return(
-                    <Form.Row className="justify-content-between">
+                    <Form.Row key={ind} className="justify-content-between">
                         <Form.Group as={Row}>
                             <Form.Label  className="mr-0" xs={5} column>
                                  Series con
