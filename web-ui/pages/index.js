@@ -15,7 +15,6 @@ export default function Home({fields}) {
     let rawSearches = JSON.parse(localStorage.getItem("recentSearch"))
     
     if (rawSearches){
-      console.log(rawSearches)
       searches = rawSearches.map(queryObj => 
         {return {...queryObj.search, timeRange: [...queryObj.search.timeRange].map(range => reformatRange(range) )}}
       )

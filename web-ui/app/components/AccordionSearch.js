@@ -69,7 +69,7 @@ const AccordionSearch = ({initSearch,index, fieldHelp, save}) =>{
                 newSearch.push({hash: searchHash ,  search: search, submitDate: (new Date ()).getTime()})
                 
                 newSearch.sort( (a,b) =>    b.submitDate - a.submitDate)
-                console.log(newSearch)
+        
                 newSearch = newSearch.slice(0,process.env.NEXT_PUBLIC_SAVED_QUERIES)
                 localStorage.setItem("recentSearch", JSON.stringify(Array.from(newSearch)))
             }

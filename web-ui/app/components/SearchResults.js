@@ -7,7 +7,7 @@ const ErrorList = ({errors}) => {
     let errorsSet = new Set(errors)
     return(
         [...errorsSet].map( er => {
-            console.log(er)
+            console.error(er)
             return(
                 <h5 className="ml-4 mt-4" >Error: {er.error} </h5>
             )
