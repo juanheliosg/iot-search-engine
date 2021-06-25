@@ -10,6 +10,11 @@ import DateRangeComponent from './DateRangeComponent'
 
 
 
+/**
+ * Simple search component for a friendly search form.
+ * @param {*} param0 
+ * @returns 
+ */
 const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, fieldHelp}) => {
 
     const fieldHelpList = fieldHelp.fields

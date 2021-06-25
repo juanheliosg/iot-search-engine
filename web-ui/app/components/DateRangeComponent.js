@@ -5,6 +5,11 @@ import PlusCircleFill from "./icons/Plus"
 import DashCircleFill from "./icons/Minus"
 import DateRangeField from "./DateRangeField"
 
+/**
+ * Component representing the date range component foir including the queries
+ * @param {*} param0 
+ * @returns 
+ */
 const DateRangeComponent = ({searchQuery, setSearch, removeObjectFromList, setObjectArrayField}) => {
 
     const addRange = () =>  {

@@ -8,6 +8,11 @@ const DynamicPlot = dynamic(() => import(
     {ssr: false})
 
 
+/**
+ * Component wrapper for a plotly chart representign a time series
+ * @param {} param0 
+ * @returns 
+ */
 const TimeSeriesChart = ({timestamps, values, subseq, subLen, measureName}) =>{
     let formattedTimestamps = timestamps.map(el => Date.parse(el))
     let data = [{

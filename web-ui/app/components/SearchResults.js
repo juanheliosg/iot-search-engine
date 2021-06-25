@@ -17,7 +17,11 @@ const ErrorList = ({errors}) => {
 }
 
 const resultsPerPage = 10
-
+/**
+ * Card component for showing a sensor result
+ * @param {*} param0 
+ * @returns 
+ */
 const ResultsList = ({res, subLen}) => {
     
     let [activePage, setPage] = useState(1)
@@ -68,7 +72,11 @@ const ResultsList = ({res, subLen}) => {
 
 }
 
-
+/**
+ * Component for showing the results after a query
+ * @param {} param0 
+ * @returns 
+ */
 const SearchResults = ({res, subLen, page, resultsPerPage}) => {
     return(
     <>

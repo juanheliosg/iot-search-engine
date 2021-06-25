@@ -1,4 +1,4 @@
-import { Form, Col, Row, Button, Container, Overlay, Tooltip } from "react-bootstrap"
+import { Form, Col, Row, Button, Overlay, Tooltip } from "react-bootstrap"
 
 
 import DateRangeComponent from './DateRangeComponent'
@@ -41,12 +41,15 @@ const getHelp = (fieldHelpList) => {
     ]
 }
 
-
+/**
+ * Component for showing help with fields an other information
+ * 
+ * @param {*} fieldHelp text for help 
+ * @param {*} key 
+ * @returns 
+ */
 const filterHelpOverlay = (fieldHelp, key) => {
-    //diferenciar entre los que tienen información de campos y los que no
-    //dar ayuda de los que no
-    //hacer un filter fields objecto con la ayuda para cada uno e iterar a partir de ahí
-    //añadir adicionalmente lso fields para cuando no se tenga la ayuda
+
     const [show, setShow] = useState(false);
     const target = useRef(null)
     if (fieldHelp.values !== undefined){

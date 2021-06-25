@@ -20,6 +20,10 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
     const  [deletePoints,setDeletePoints] = useState(false)
     const [fileVal, setValidFile] = useState({msg: "", valid: null})
 
+    /**
+     * File reader handler for subsequence introduction
+     * @param {*} e  event
+     */
     const handleFileInput = (e) => {
         const fileToRead = e.target.files[0]
         const fileReader = new FileReader()
@@ -58,8 +62,12 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
         fileReader.readAsText(fileToRead, 'UTF-8')
     }
 
+    /**
+     * newPoint callback handler for adding a new point in the canvas
+     * @param {*} e 
+     */
     const newPoint = (e) => {
-        //Está dentro del área de selección
+        
 
         const getTopBox = () => {
             //Manera bastante hacky de sacar los limites inferiores y superiores del gráfico además de los laterales derechos
@@ -105,8 +113,11 @@ const SubsequenceCanvas = ({subsequence, setSubsequence}) => {
         }
     }
 
+    /**
+     * callback function for removing a point in the canvas
+     * @param {*} data 
+     */
     const removePoint = (data) => {
-        
         
         if (data.points){
             const newSubsequence = [...subsequence]

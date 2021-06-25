@@ -8,7 +8,7 @@ const getTranslatedFilter = (aggFilter) => {
     switch(aggFilter){
         case "avg":
             return "media aritmética"
-        case "std":
+        case "stddev":
             return "desviación estándar"
         case "sum":
             return "suma"

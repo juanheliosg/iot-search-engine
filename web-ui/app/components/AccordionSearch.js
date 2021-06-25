@@ -57,6 +57,11 @@ const AccordionSearch = ({initSearch,index, fieldHelp, save}) =>{
         
         setValidated(true);
       };
+    /**
+     * Function for saving the current search in localStorage
+     * 
+     * Only las NEXT_PUBLIC_SAVED QUERIES are saved 
+     */
     const saveSearch = () => {
         let previousSearch = JSON.parse(
             localStorage.getItem("recentSearch"))
@@ -79,11 +84,6 @@ const AccordionSearch = ({initSearch,index, fieldHelp, save}) =>{
                 {hash: searchHash ,  search: search, submitDate: new Date}
             ]))
         }
-
-
-        
-        
-
     }
    
     return(

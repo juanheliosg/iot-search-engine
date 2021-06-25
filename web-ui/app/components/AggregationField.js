@@ -1,8 +1,7 @@
-import { Form, Col, Row, Button } from "react-bootstrap"
+import { Form, Col, Row, Button, Overlay, Tooltip, Popover  } from "react-bootstrap"
 import PlusCircleFill from "./icons/Plus"
 import DashCircleFill from "./icons/Minus"
-import {useState} from 'react'
-import { createPortal } from "react-dom"
+import {useState, useRef} from 'react'
 
 /**
  * Aggregation field form component representing and aggregation filter
@@ -16,6 +15,8 @@ import { createPortal } from "react-dom"
 const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggField}) => {
     const [compAgg, setCompAgg] = useState(false)
     const [compValue, setCompValue] = useState(false)
+    const [showHelp, setShowHelp] = useState(false)
+    const helpTarget = useRef(null)
 
     const addNewAggFilter = () =>{
         const newAgg = {
@@ -40,7 +41,21 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
         <>
             <Row className="align-items-center justify-content-between">
                     <Col xs={3} >
+                        <Button variant="light" className="d-inline-flex align-items-center"
+                            ref={helpTarget} onPointerDown={() => setShowHelp(!showHelp)}>
                         <p className="mb-0" style={{fontSize: "15px"}}>Filtro agregación</p>
+                        </Button>
+                        <Overlay target={helpTarget.current} show={showHelp} placement="right">
+                            <Popover>
+                            <p style={{fontSize: "15px"}} className="mb-0 ml-2 mb-4">
+                    Las consultas de agregación permiten obtener y
+                     comparar medidas estadísticas como la media de una serie temporal 
+                     con medidas estadísticas del total de las series filtradas o con el valor que pongas.
+                    
+                    Marca las cajas para comparar con agregacioneso valor o no marques ninguna para obtener solo la medida
+                </p>
+                            </Popover>
+                        </Overlay>
                     </Col>
                     <Col xs={3} className="pl-0">
                         <p className="mb-0" style={{fontSize: "15px"}}>Comparar agregaciones</p>     
@@ -76,15 +91,6 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                         </Button>
                     </Col>  
             </Row>
-            <Form.Row>
-                <p style={{fontSize: "15px"}} className="mb-0 ml-2 mb-4 text-muted">
-                    Las consultas de agregación permitir obtener y
-                     comparar medidas estadísticas como la media de una serie temporal 
-                     con medidas estadísticas del total de las series filtradas o con el valor que pongas.
-                    
-                    Marca las cajas para comparar con agregacioneso valor o no marques ninguna para obtener solo la medida
-                </p>
-            </Form.Row>
             {
                 aggFields && aggFields.map( (agg,ind) => {
                     return(
@@ -99,7 +105,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                                     custom
                                 >
                                     <option value= "avg">media</option>
-                                    <option value= "std">desviación estándar</option>
+                                    <option value= "stddev">desviación estándar</option>
                                     <option value= "sum">suma</option>
                                     <option value= "max">máximo</option>
                                     <option value= "min">mínimo</option>
@@ -133,7 +139,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                             onChange={(e) => setAggField('aggComparation','aggregationFilter',e.target.value, ind)}
                             custom>
                                 <option value= "avg">media total</option>
-                                <option value= "std">desviación estándar total</option>
+                                <option value= "stddev">desviación estándar total</option>
                                 <option value= "sum">suma total</option>
                                 <option value= "max">máximo total</option>
                                 <option value= "min">mínimo total</option>
