@@ -34,11 +34,11 @@ class QueryModelTest extends PlaySpec{
       100,List(Tuple2("2021-05-03T08:27:47Z","2021-05-03T08:23:47Z")),
       true,
       "aggregation", "tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation'",
-      aggregationFilter = Some(List(AggregationFilter("min")
+      aggregationFilter = Some(List(AggregationFilter("min"),AggregationFilter("max"),AggregationFilter("avg"),
+        AggregationFilter("stddev")
       )))
 
-
-    val expectedQuery = "SELECT seriesID, sensorID, __time, address, city, country, description, measure, measure_desc, measure_name, name, region, sampling_unit, sampling_freq, tags, unit, lat, long,  min_agg  FROM  (SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' ) INNER JOIN(SELECT seriesID as seriesID2,  min_agg  FROM (SELECT DISTINCT(seriesID), min(measure) AS min_agg  FROM tseriesdb WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' GROUP BY 1 ))ON seriesID = seriesID2"
+    val expectedQuery = "SELECT seriesID, sensorID, __time, address, city, country, description, measure, measure_desc, measure_name, name, region, sampling_unit, sampling_freq, tags, unit, lat, long,  min_agg , max_agg , avg_agg , stddev_agg  FROM  (SELECT * FROM tseriesdb  WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' ) INNER JOIN(SELECT seriesID as seriesID2,  min_agg , max_agg , avg_agg , stddev_agg  FROM (SELECT DISTINCT(seriesID), min(measure) AS min_agg ,max(measure) AS max_agg ,avg(measure) AS avg_agg ,stddev(measure) AS stddev_agg  FROM tseriesdb WHERE (__time >= '2021-05-03T08:27:47Z' AND __time <= '2021-05-03T08:23:47Z') AND tags = 'traffic' AND city = 'Santander' AND measure_name = 'ocupation' GROUP BY 1 ))ON seriesID = seriesID2"
     aggQuery.composeAggregationQuery mustBe expectedQuery
   }
 

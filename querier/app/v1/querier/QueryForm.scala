@@ -46,7 +46,7 @@ object QueryForm {
 
       "aggregationFilter" -> optional(list(
           mapping(
-          "operation" -> nonEmptyText.verifying(AggregationType.isType(_)),
+          "operation" -> nonEmptyText.verifying("Wrong operation type",AggregationType.isType(_)),
             "value" -> optional(bigDecimal),
             "aggComparation" -> optional(nonEmptyText.verifying(AggregationType.isType(_))),
             "relation" -> optional(nonEmptyText.verifying(RelationType.isType(_)))

@@ -114,9 +114,8 @@ case class Query(limit: Int, timeRanges: List[(String, String)],
         s" INNER JOIN" +
         s"(SELECT seriesID as seriesID2, $aggResults FROM " +
         s"(SELECT DISTINCT(seriesID), $aggComputation FROM $datasource" +
-        s"$whereClausule GROUP BY 1 ${if (havingClausule.nonEmpty) s"HAVING $havingClausule"}))" +
+        s"$whereClausule GROUP BY 1 ${if (havingClausule.nonEmpty) s"HAVING $havingClausule" else ""}))" +
         s"ON seriesID = seriesID2"
-
     }
 
 

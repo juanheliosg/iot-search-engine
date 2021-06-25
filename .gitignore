@@ -3,6 +3,8 @@
 .bsp
 .metals
 
+secrets.conf
+
 # scala 3
 .tasty
 #druid dirs
