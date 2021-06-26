@@ -1,4 +1,4 @@
-import { Form, Col, Row, Button, Overlay, Tooltip, Popover  } from "react-bootstrap"
+import { Form, Col, Row, Button, Overlay, Container, Popover  } from "react-bootstrap"
 import PlusCircleFill from "./icons/Plus"
 import DashCircleFill from "./icons/Minus"
 import {useState, useRef} from 'react'
@@ -38,7 +38,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
     }
      
     return(
-        <>
+        <Container className="mb-4" fluid>
             <Row className="align-items-center justify-content-between">
                     <Col xs={3} >
                         <Button variant="light" className="d-inline-flex align-items-center"
@@ -57,8 +57,8 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                             </Popover>
                         </Overlay>
                     </Col>
-                    <Col className="pl-0 m-0">
-                        <p className="mb-0" style={{fontSize: "15px"}}>Comparar agregaciones</p>     
+                    <Col className="pl-0 m-0" >
+                        <p className="mb-0" style={{fontSize: "15px"}}>Comparar agregación</p>     
                     </Col>
                     <Col xs={1} className="pl-0">
                         <input type="checkbox" value={false}  checked={compAgg} onChange={() => {
@@ -96,7 +96,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                     return(
                     <Form.Row key={ind} className="justify-content-between mt-3">
                         <Form.Group as={Row}>
-                            <Form.Label className="mr-0" column>
+                            <Form.Label className="mr-1" xs={3.5} column>
                                  Series con
                             </Form.Label>
                             <Col className="mr-0 ml-0 pl-0">
@@ -114,7 +114,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                         </Form.Group>
                     {(agg.value !== null || agg.aggComparation) && 
                     
-                        <Form.Group as={Col} xs={1.5}>
+                        <Form.Group as={Col}>
                                 <Form.Control as="select" defaultValue={agg.relation}  
                                     onChange={(e) => setAggField('relation','aggregationFilter',e.target.value, ind)}
                                     custom>
@@ -134,7 +134,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                         </Form.Group>
                     }
                     {agg.aggComparation &&
-                        <Form.Group as={Col} md="auto" className="mr-0 ml-0 pl-0" >
+                        <Form.Group as={Col} className="mr-0 ml-0 pl-0" >
                             <Form.Control as="select" defaultValue={agg.operation} 
                             onChange={(e) => setAggField('aggComparation','aggregationFilter',e.target.value, ind)}
                             custom>
@@ -155,7 +155,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                     )
                 })
             }
-        </>
+        </Container>
 
     )
 }

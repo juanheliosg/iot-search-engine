@@ -70,11 +70,13 @@ const AccordionSearch = ({initSearch,index, fieldHelp, save}) =>{
         if (previousSearch){
             let previousExistence = previousSearch.map(obj => obj.hash).includes(searchHash)
             if (!previousExistence){
-                let newSearch = previousSearch.map(obj => {return{...obj, submitDate: Date.parse(obj.submitDate)}})
+                console.log(previousSearch)
+                let newSearch = previousSearch.map(obj => {return{...obj, 
+                    submitDate: obj.submitDate == null? 0 : Date.parse(obj.submitDate) }})
                 newSearch.push({hash: searchHash ,  search: search, submitDate: (new Date ()).getTime()})
                 
-                newSearch.sort( (a,b) =>   a.submitDate -  b.submitDate)
-        
+                newSearch.sort( (a,b) =>  b.submitDate - a.submitDate)
+                console.log(newSearch)
                 newSearch = newSearch.slice(0,process.env.NEXT_PUBLIC_SAVED_QUERIES)
                 localStorage.setItem("recentSearch", JSON.stringify(Array.from(newSearch)))
             }
