@@ -16,7 +16,7 @@ const getHelp = (fieldHelpList) => {
         {field: "measure_name", msg: "Nombre de la medición",
             values: fieldHelpList?fieldHelpList['measure'].fieldList:[]},
 
-        {field: "measure_units", msg: "Unidad física de la medición",
+        {field: "units", msg: "Unidad física de la medición",
         values: fieldHelpList?fieldHelpList['measure_units'].fieldList:[]},
 
         {field: "name", msg: "Nombre de la fuente de datos",
@@ -158,7 +158,7 @@ const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
 
             <Form.Row className="justify-content-center">
                 <Form.Group as={Row} className="ml-1">
-                    <Form.Label>
+                    <Form.Label as={Col} md="auto" style={{fontSize: "15px"}}>
                         Devolver series temporales
                     </Form.Label>
                 <Col>
@@ -170,7 +170,7 @@ const AdvancedSearch = ({searchQuery,setSearch,ind, fieldHelp}) => {
                 </Col>
                 </Form.Group>
                 <Form.Group as={Row} className="ml-1">
-                    <Form.Label>
+                    <Form.Label as={Col} md="auto" style={{fontSize: "15px"}}>
                         Buscar por subsecuencias
                     </Form.Label>
                     <Col>

@@ -93,7 +93,7 @@ const SimpleSearch = ({searchQuery, setSearch, simplifiedFilter,setSimpFilter, f
                     [...simplifiedFilter.tags].map( (el,ind) => {
                         return(
                     
-                    <Button as={Col} md="auto" className="d-flex pr-0 pl-0 mt-2 ml-2" variant="primary" 
+                    <Button key={ind} as={Col} md="auto" className="d-flex pr-0 pl-0 mt-2 ml-2" variant="primary" 
                             onClick={(e) => {
                                 const newTags = new Set(simplifiedFilter.tags)
                                 if (newTags.delete(el)){

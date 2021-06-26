@@ -57,7 +57,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                             </Popover>
                         </Overlay>
                     </Col>
-                    <Col xs={3} className="pl-0">
+                    <Col className="pl-0 m-0">
                         <p className="mb-0" style={{fontSize: "15px"}}>Comparar agregaciones</p>     
                     </Col>
                     <Col xs={1} className="pl-0">
@@ -94,9 +94,9 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
             {
                 aggFields && aggFields.map( (agg,ind) => {
                     return(
-                    <Form.Row key={ind} className="justify-content-between">
+                    <Form.Row key={ind} className="justify-content-between mt-3">
                         <Form.Group as={Row}>
-                            <Form.Label  className="mr-0" xs={5} column>
+                            <Form.Label className="mr-0" column>
                                  Series con
                             </Form.Label>
                             <Col className="mr-0 ml-0 pl-0">
@@ -114,7 +114,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                         </Form.Group>
                     {(agg.value !== null || agg.aggComparation) && 
                     
-                        <Form.Group as={Col} xs={2}>
+                        <Form.Group as={Col} xs={1.5}>
                                 <Form.Control as="select" defaultValue={agg.relation}  
                                     onChange={(e) => setAggField('relation','aggregationFilter',e.target.value, ind)}
                                     custom>
@@ -134,7 +134,7 @@ const AggregationFieldSearch = ({aggFields, setNewAgg, setAggField, removeAggFie
                         </Form.Group>
                     }
                     {agg.aggComparation &&
-                        <Form.Group as={Col} className="mr-0 ml-0 pl-0" >
+                        <Form.Group as={Col} md="auto" className="mr-0 ml-0 pl-0" >
                             <Form.Control as="select" defaultValue={agg.operation} 
                             onChange={(e) => setAggField('aggComparation','aggregationFilter',e.target.value, ind)}
                             custom>

@@ -59,8 +59,8 @@ const ResultsList = ({res, subLen}) => {
             </Col>
         </Row>
         { series && <Container as="section" fluid>
-            {series.map(serie => 
-                <ResultCard serie={serie} subLen={subLen}/>)}
+            {series.map( (serie,ind) => 
+                <ResultCard key={ind} serie={serie} subLen={subLen}/>)}
         </Container>}
         {series && <Row className="justify-content-center mt-4">
                 <Pagination>

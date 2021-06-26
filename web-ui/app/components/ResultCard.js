@@ -1,7 +1,8 @@
-import {Card, Row, Col} from 'react-bootstrap'
+import {Card, Row, Col, Container} from 'react-bootstrap'
 import TimeSeriesChart from './TimeSeriesChart'
 
 const ResultCard = ({serie,subLen}) =>{
+
     return(
         <Card className="mt-4">
             <Card.Body>
@@ -34,7 +35,7 @@ const ResultCard = ({serie,subLen}) =>{
                         <p>Medida</p>
                     </Col>
                     <Col xs={2}>
-                        <p className="font-weight-bold">{serie.measureName}</p>
+                        <p className="font-weight-bold">{serie.measureUnit}</p>
                     </Col>
                     <Col>
                         <p>{serie.measureDescr}</p>
@@ -73,23 +74,23 @@ const ResultCard = ({serie,subLen}) =>{
                     </Col>
                 </Row>
                 <Row>
-                    {serie.stats.map( el =>
-                    <>
-                    <Col xs={2}>
-                       <p>{el.name}</p>
+                    {serie.stats.map( (el,ind) =>
+                    <Col key={ind} className="d-flex flex-row" >
+                        <Col>
+                            <p>{el.name}</p>
+                        </Col>
+                        <Col>
+                            <p className="font-weight-bold">{parseFloat(el.value).toFixed(3)}</p>
+                        </Col>
                     </Col>
-                    <Col xs={2}>
-                        <p className="font-weight-bold">{parseFloat(el.value).toFixed(3)}</p>
-                    </Col>
-                    </>
                        )}
                 </Row>
                 {serie.timestamps.length > 0 && serie.values.length > 0 && 
                 <TimeSeriesChart timestamps={serie.timestamps} 
-                values={serie.values} 
-                subseq={serie.subsequences} 
-                subLen={subLen}
-                measureName={serie.measureName} />
+                    values={serie.values} 
+                    subseq={serie.subsequences} 
+                    subLen={subLen}
+                    measureName={serie.measureName} />
                 }
 
                 

@@ -50,7 +50,7 @@ const useFields = () => {
 const useQuery = (payload, setRes) => {
     setRes({data: null, error: null, isLoading: true})
     console.log(payload)
-    axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/query`,payload).then(res => {
+    axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/query`,payload,{timeout:process.env.QUERY_TIMEOUT}).then(res => {
             setRes({data: res.data, isLoading: false, error: null});
          }).catch((error) => {
              if (error.response){

@@ -68,7 +68,7 @@ const TimeSeriesChart = ({timestamps, values, subseq, subLen, measureName}) =>{
     
     return(
     <>
-        {subLen > 0 && subseq && <Row>
+        {subLen > 0 && subseq[0] !== undefined && <Row>
             <Col>
                 <p>Menor distancia euclidea a la secuencia:</p>
             </Col>
