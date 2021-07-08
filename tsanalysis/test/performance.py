@@ -12,3 +12,4 @@ with open("./data/broken_query_subseq_big_fast.json", 'r') as jsonfile:
     response = client.post("/subsequence/search", jsonQuery).json()
     end = time.time()
     print(end - start)
+

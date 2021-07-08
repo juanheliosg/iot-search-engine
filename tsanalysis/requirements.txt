@@ -8,7 +8,7 @@ chardet==4.0.0
 click==7.1.2
 dnspython==2.1.0
 email-validator==1.1.2
-fastapi==0.65.0
+fastapi==0.65.2
 graphene==2.1.8
 graphql-core==2.3.2
 graphql-relay==2.0.1
@@ -29,7 +29,7 @@ pluggy==0.13.1
 promise==2.3
 py==1.10.0
 py4j==0.10.9
-pydantic==1.8.1
+pydantic==1.8.2
 pyparsing==2.4.7
 pytest==6.2.4
 python-dateutil==2.8.1
@@ -46,8 +46,8 @@ stumpy==1.8.0
 toml==0.10.2
 typing-extensions==3.10.0.0
 ujson==4.0.2
-urllib3==1.26.4
+urllib3==1.26.5
 uvicorn==0.13.4
 uvloop==0.15.2
 watchgod==0.7
-websockets==8.1
+websockets==9.1
