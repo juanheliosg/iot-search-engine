@@ -1,5 +1,5 @@
 # The IoT search engine
-Repository for my Bachelor's Thesis in the University of Granada. Feel free 
+Repository for my Bachelor's Thesis in the University of Granada.
 
 ## Abstract
 With the arrival of the Internet of Things, there is a growing number of devices
@@ -18,7 +18,7 @@ attributes in a cloud environment. Also, a novel user interface is presented for
 time series for subsequence pattern search.
 
 ## How to run services
-First you need to create service images extractor docker images. For Scala services (querier and extractor) use sbt 1.4.9 for building the services.
+First you need to create service images extractor docker images. For Scala services (querier and extractor) use sbt 1.4.9 for building container images.
 
 ```sbt querier/docker:publishLocal```
 ```sbt extractor/docker:publishLocal```
@@ -30,7 +30,7 @@ For webui and tsanalysis services run docker build:
 
 For druid be sure to create ```druid_data``` folder with correct permissions: ```chmod 777 ./druid_data```.
 
-ENV variables in druidEnv, docker-compose.yml and web-ui/.env.local (you can find an example on web-ui/sample.env.local) must be changed for production deployment.
+ENV variables in ```druidEnv```, docker-compose.yml and ```web-ui/.env.local``` (you can find an example on web-ui/sample.env.local) must be changed for production deployment.
 
 Finally run ``docker-compose up -d`` for running the containers.
 
